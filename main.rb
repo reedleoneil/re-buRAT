@@ -48,39 +48,74 @@ client.add_topic_callback("/bu/agents/#{agent[:id]}/inators/file_rw/cmds/write")
 end
 
 client.on_message do |p|
-	puts "Topic: #{p.topic}\nPayload: #{p.payload}\nQoS: #{p.qos}"
+	#puts "Topic: #{p.topic}\nPayload: #{p.payload}\nQoS: #{p.qos}"
 end
 
 rs_inator.on :open do |pid, shell|
-	puts "rs_inator@on_open pid => #{pid} shell => #{shell}"
+	packet = {
+		pid: pid,
+		shell: shell
+	}
+	client.publish("/bu/agents/#{agent[:id]}/inators/remote_shell/events/open", packet, false, 1)
 end
 
 rs_inator.on :close do |pid|
-	puts "rs_inator@on_close pid => #{pid}"
+	packet = {
+		pid: pid
+	}
+	client.publish("/bu/agents/#{agent[:id]}/inators/remote_shell/events/close", packet, false, 1)
 end
 
 rs_inator.on :read do |pid, data|
-	puts "rs_inator@on_read pid => #{pid} data => #{data}"
+	packet = {
+		pid: pid,
+		data: data
+	}
+	client.publish("/bu/agents/#{agent[:id]}/inators/remote_shell/events/read", packet, false, 1)
 end
 
 rs_inator.on :write do |pid, data|
-	puts "rs_inator@on_write pid => #{pid} data => #{data}"
+	packet = {
+		pid: pid,
+		data: data
+	}
+	client.publish("/bu/agents/#{agent[:id]}/inators/remote_shell/events/write", packet, false, 1)
 end
 
 rs_inator.on :error do |pid, error|
-	puts "rs_inator@on_error pid => #{pid} error => #{error}"
+	packet = {
+		pid: pid,
+		error: error
+	}
+	client.publish("/bu/agents/#{agent[:id]}/inators/remote_shell/events/error", packet, false, 1)
 end
 
 frw_inator.on :read do |file, length, offset, data|
-	puts "frw_inator@on_read file => #{file} length => #{length} offset => #{offset} data => #{data}"
+	packet = {
+		file: file,
+		length: length,
+		offset: offset,
+		data: data
+	}
+	puts packet[:data]
+	client.publish("/bu/agents/#{agent[:id]}/inators/file_rw/events/read", packet, false, 1)
 end
 
-frw_inator.on :write do |file, length, offset, data|
-	puts "frw_inator@on_write file => #{file} length => #{length} offset => #{offset} data => #{data}"
+frw_inator.on :write do |file, data, offset, length|
+	packet = {
+		file: file,
+		offset: offset,
+		length: length
+	}
+	client.publish("/bu/agents/#{agent[:id]}/inators/file_rw/events/write", packet, false, 1)
 end
 
 frw_inator.on :error do |file, error|
-	puts "frw_inator@on_error file => #{file} error => #{error}"
+	packet = {
+		file: file,
+		error: error
+	}
+	client.publish("/bu/agents/#{agent[:id]}/inators/file_rw/events/error", packet, false, 1)
 end
 
 client.connect('localhost', 1883, client.keep_alive, true, true)
