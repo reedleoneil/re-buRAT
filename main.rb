@@ -21,7 +21,7 @@ frw_inator = FileReadWriteInator.new
 client.on_connack do
 	client.publish("/bu/agents/#{agent[:id]}", agent.to_json, false, 1)
 end
-5
+
 client.add_topic_callback("/bu/agents/#{agent[:id]}/inators/remote_shell/cmds/open") do |packet|
 	packet = JSON.parse(packet.payload, object_class: OpenStruct)
 	rs_inator.open(packet.shell)
@@ -39,12 +39,12 @@ end
 
 client.add_topic_callback("/bu/agents/#{agent[:id]}/inators/file_rw/cmds/read") do |packet|
 	packet = JSON.parse(packet.payload, object_class: OpenStruct)
-	rs_inator.write(packet.file, packet.length, packet.offset)
+	frw_inator.read(packet.file, packet.length, packet.offset)
 end
 
 client.add_topic_callback("/bu/agents/#{agent[:id]}/inators/file_rw/cmds/write") do |packet|
 	packet = JSON.parse(packet.payload, object_class: OpenStruct)
-	rs_inator.write(packet.file, packet.data, packet.offset)
+	frw_inator.write(packet.file, packet.data, packet.offset)
 end
 
 client.on_message do |p|
