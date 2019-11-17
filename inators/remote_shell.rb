@@ -28,9 +28,7 @@ class RemoteShellInator
 
 	def open(shell)
 		remote_shell = Open3.popen2e(shell)
-		remote_shell.push shell
-		@remote_shells.push remote_shell
-		Thread.new {
+		remote_shell.push Thread.new {
 			begin
 				while line = remote_shell[1].gets
 					@on_read.call(remote_shell[2].pid, line)
@@ -39,14 +37,17 @@ class RemoteShellInator
 				@on_error.call(remote_shell[2].pid, msg)
 			end
 		}
+		remote_shell.push shell
+		@remote_shells.push remote_shell
 		@on_open.call(remote_shell[2].pid, shell)
 	end
 
 	def close(pid)
 		remote_shell = @remote_shells.find { |remote_shell| remote_shell[2].pid == pid }
-		remote_shell[0].close
+		remote_shell[3].kill
+		remote_shell[2].kill
 		remote_shell[1].close
-		Process.kill("KILL", remote_shell[2].pid)
+		remote_shell[0].close
 		@remote_shells.delete remote_shell
 		@on_close.call(remote_shell[2].pid)
 	end
