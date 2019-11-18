@@ -1,8 +1,9 @@
-require_relative "inators/remote_shell"
-require_relative "inators/file_rw"
 require 'paho-mqtt'
 require 'json'
 require 'securerandom'
+
+require_relative "inators/remote_shell"
+require_relative "inators/file_rw"
 
 agent = {
 	id: SecureRandom.uuid,
@@ -19,7 +20,7 @@ rs_inator = RemoteShellInator.new
 frw_inator = FileReadWriteInator.new
 
 client.on_connack do
-	client.publish("/bu/agents/#{agent[:id]}", agent.to_json, false, 1)
+	client.publish("/bu/agents/#{agent[:id]}", agent, false, 1)
 end
 
 client.add_topic_callback("/bu/agents/#{agent[:id]}/inators/remote_shell/cmds/open") do |packet|
@@ -57,6 +58,10 @@ rs_inator.on :open do |pid, shell|
 		shell: shell
 	}
 	client.publish("/bu/agents/#{agent[:id]}/inators/remote_shell/events/open", packet, false, 1)
+	packet = {
+		remote_shells: rs_inator.remote_shells
+	}
+	client.publish("/bu/agents/#{agent[:id]}/inators/remote_shell", packet, false, 1)
 end
 
 rs_inator.on :close do |pid|
@@ -64,6 +69,10 @@ rs_inator.on :close do |pid|
 		pid: pid
 	}
 	client.publish("/bu/agents/#{agent[:id]}/inators/remote_shell/events/close", packet, false, 1)
+	packet = {
+		remote_shells: rs_inator.remote_shells
+	}
+	client.publish("/bu/agents/#{agent[:id]}/inators/remote_shell", packet, false, 1)
 end
 
 rs_inator.on :read do |pid, data|
