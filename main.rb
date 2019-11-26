@@ -1,5 +1,6 @@
 require 'paho-mqtt'
-require 'json'
+require 'msgpacker'
+require 'ostruct'
 require 'securerandom'
 
 require_relative "inators/remote_shell"
@@ -20,31 +21,31 @@ rs_inator = RemoteShellInator.new
 frw_inator = FileReadWriteInator.new
 
 client.on_connack do
-	client.publish("/bu/agents/#{agent[:id]}", agent.to_json, false, 1)
+	client.publish("/bu/agents/#{agent[:id]}", agent.to_msgpack, false, 1)
 end
 
 client.add_topic_callback("/bu/agents/#{agent[:id]}/inators/remote_shell/cmds/open") do |packet|
-	packet = JSON.parse(packet.payload, object_class: OpenStruct)
+	packet = OpenStruct.new MessagePack.unpack(packet.payload)
 	rs_inator.open(packet.shell)
 end
 
 client.add_topic_callback("/bu/agents/#{agent[:id]}/inators/remote_shell/cmds/close") do |packet|
-	packet = JSON.parse(packet.payload, object_class: OpenStruct)
+	packet = OpenStruct.new MessagePack.unpack(packet.payload)
 	rs_inator.close(packet.pid)
 end
 
 client.add_topic_callback("/bu/agents/#{agent[:id]}/inators/remote_shell/cmds/write") do |packet|
-	packet = JSON.parse(packet.payload, object_class: OpenStruct)
+	packet = OpenStruct.new MessagePack.unpack(packet.payload)
 	rs_inator.write(packet.pid, packet.data)
 end
 
 client.add_topic_callback("/bu/agents/#{agent[:id]}/inators/file_rw/cmds/read") do |packet|
-	packet = JSON.parse(packet.payload, object_class: OpenStruct)
+	packet = OpenStruct.new MessagePack.unpack(packet.payload)
 	frw_inator.read(packet.file, packet.length, packet.offset)
 end
 
 client.add_topic_callback("/bu/agents/#{agent[:id]}/inators/file_rw/cmds/write") do |packet|
-	packet = JSON.parse(packet.payload, object_class: OpenStruct)
+	packet = OpenStruct.new MessagePack.unpack(packet.payload)
 	frw_inator.write(packet.file, packet.data, packet.offset)
 end
 
@@ -57,7 +58,7 @@ rs_inator.on :open do |pid, shell|
 		pid: pid,
 		shell: shell
 	}
-	client.publish("/bu/agents/#{agent[:id]}/inators/remote_shell/events/open", packet.to_json, false, 1)
+	client.publish("/bu/agents/#{agent[:id]}/inators/remote_shell/events/open", packet.to_msgpack, false, 1)
 	remote_shells = []
 	rs_inator.remote_shells.each do |remote_shell|
 		remote_shells << { :pid => remote_shell[2].pid, :shell => remote_shell[4] }
@@ -65,21 +66,22 @@ rs_inator.on :open do |pid, shell|
 	packet = {
 		remote_shells: remote_shells
 	}
-	client.publish("/bu/agents/#{agent[:id]}/inators/remote_shell", packet.to_json, false, 1)
+	client.publish("/bu/agents/#{agent[:id]}/inators/remote_shell", packet.to_msgpack, false, 1)
 end
 
 rs_inator.on :close do |pid|
 	packet = {
 		pid: pid
 	}
-	client.publish("/bu/agents/#{agent[:id]}/inators/remote_shell/events/close", packet.to_json, false, 1)
+	client.publish("/bu/agents/#{agent[:id]}/inators/remote_shell/events/close", packet.to_msgpack, false, 1)
+	remote_shells = []
 	rs_inator.remote_shells.each do |remote_shell|
 		remote_shells << { :pid => remote_shell[2].pid, :shell => remote_shell[4] }
 	end
 	packet = {
 		remote_shells: remote_shells
 	}
-	client.publish("/bu/agents/#{agent[:id]}/inators/remote_shell", packet.to_json, false, 1)
+	client.publish("/bu/agents/#{agent[:id]}/inators/remote_shell", packet.to_msgpack, false, 1)
 end
 
 rs_inator.on :read do |pid, data|
@@ -87,7 +89,7 @@ rs_inator.on :read do |pid, data|
 		pid: pid,
 		data: data
 	}
-	client.publish("/bu/agents/#{agent[:id]}/inators/remote_shell/events/read", packet.to_json, false, 1)
+	client.publish("/bu/agents/#{agent[:id]}/inators/remote_shell/events/read", packet.to_msgpack, false, 1)
 end
 
 rs_inator.on :write do |pid, data|
@@ -95,7 +97,7 @@ rs_inator.on :write do |pid, data|
 		pid: pid,
 		data: data
 	}
-	client.publish("/bu/agents/#{agent[:id]}/inators/remote_shell/events/write", packet.to_json, false, 1)
+	client.publish("/bu/agents/#{agent[:id]}/inators/remote_shell/events/write", packet.to_msgpack, false, 1)
 end
 
 rs_inator.on :error do |pid, error|
@@ -103,7 +105,7 @@ rs_inator.on :error do |pid, error|
 		pid: pid,
 		error: error
 	}
-	client.publish("/bu/agents/#{agent[:id]}/inators/remote_shell/events/error", packet.to_json, false, 1)
+	client.publish("/bu/agents/#{agent[:id]}/inators/remote_shell/events/error", packet.to_msgpack, false, 1)
 end
 
 frw_inator.on :read do |file, length, offset, data|
@@ -114,7 +116,7 @@ frw_inator.on :read do |file, length, offset, data|
 		data: data
 	}
 	puts packet[:data]
-	client.publish("/bu/agents/#{agent[:id]}/inators/file_rw/events/read", packet.to_json, false, 1)
+	client.publish("/bu/agents/#{agent[:id]}/inators/file_rw/events/read", packet.to_msgpack, false, 1)
 end
 
 frw_inator.on :write do |file, data, offset, length|
@@ -123,7 +125,7 @@ frw_inator.on :write do |file, data, offset, length|
 		offset: offset,
 		length: length
 	}
-	client.publish("/bu/agents/#{agent[:id]}/inators/file_rw/events/write", packet.to_json, false, 1)
+	client.publish("/bu/agents/#{agent[:id]}/inators/file_rw/events/write", packet.to_msgpack, false, 1)
 end
 
 frw_inator.on :error do |file, error|
@@ -131,7 +133,7 @@ frw_inator.on :error do |file, error|
 		file: file,
 		error: error
 	}
-	client.publish("/bu/agents/#{agent[:id]}/inators/file_rw/events/error", packet.to_json, false, 1)
+	client.publish("/bu/agents/#{agent[:id]}/inators/file_rw/events/error", packet.to_msgpack, false, 1)
 end
 
 client.connect('localhost', 1883, client.keep_alive, true, true)
