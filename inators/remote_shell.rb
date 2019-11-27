@@ -28,6 +28,8 @@ class RemoteShellInator
 
 	def open(shell)
 		remote_shell = Open3.popen2e(shell)
+		remote_shell[0].binmode
+		remote_shell[1].binmode
 		remote_shell.push Thread.new {
 			begin
 				while line = remote_shell[1].gets
