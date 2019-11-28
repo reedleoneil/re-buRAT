@@ -47,7 +47,7 @@ case ARGV[0].to_i
 			payload: { file: ARGV[2], data: File.binread(ARGV[3]), offset: ARGV[4].to_i }
 		}
 	else
-		puts "Usage: ruby bu.rb 1..5 [REQUIRED:optional]..[REQUIRED:optional]"
+		puts "Usage: ruby kuchi.rb 1..5 [REQUIRED:optional]..[REQUIRED:optional]"
 		puts "  1 [AGENT] [SHELL]".ljust(75) +														"Open a remote shell."
 		puts "  2 [AGENT] [PID]".ljust(75) +														"Close a remote shell."
 		puts "  3 [AGENT] [PID] [DATA] [local output file]".ljust(75) +								"Write data to a remote shell."

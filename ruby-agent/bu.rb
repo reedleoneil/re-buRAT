@@ -17,8 +17,8 @@ agent = {
 }
 
 client = PahoMqtt::Client.new
-rs_inator = RemoteShellInator.new
-frw_inator = FileReadWriteInator.new
+rs_inator = Bu::RemoteShellInator.new
+frw_inator = Bu::FileReadWriteInator.new
 
 client.on_connack do
 	client.publish("/bu/agents/#{agent[:id]}", agent.to_msgpack, false, 1)
