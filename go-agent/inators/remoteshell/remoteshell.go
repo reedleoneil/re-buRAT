@@ -1,80 +1,115 @@
 package remoteshell
 
 import (
-	"bytes"
-	"fmt"
-	"log"
+	"os"
 	"os/exec"
-	"strings"
+	"fmt"
+	"bufio"
 )
 
-const (
-	Open = 1
-	Close = 2
-	Read = 3
-	Write = 4
-	Error = 5 
-)
-
-type Event byte
-type EventCallback func()
-
-type RemoteShell interface {
-	RemoteShells() []string
+type RemoteShellInator interface {
+	RemoteShells() []exec.Cmd
 	Open(shell string)
 	Close(pid int)
 	Write(pid int, data string)
-	On(event Event, callback EventCallback)
+	OnOpen(callback func (pid int, shell string))
+	OnClose(callback func (pid int, shell string))
+	OnRead(callback func (pid int, shell string))
+	OnWrite(callback func (pid int, shell string))
+	OnError(callback func (pid int, shell string))
 }
 
-type remoteShell struct {
-	onOpen		func(pid int, shell string)
-	onClose		func(pid int)			
-	onRead		func(pid int, data string)	
-	onWrite		func(pid int, data string)	
-	onError		func(pid int, error string)	
+type remoteShellInator struct {
+	remoteShells	[]exec.Cmd
+	onOpen			func(pid int, shell string)
+	onClose			func(pid int)			
+	onRead			func(pid int, data string)	
+	onWrite			func(pid int, data string)	
+	onError			func(pid int, error string)	
 }
 
-func NewRemoteShell() RemoteShell {
-	r := &remoteShell{}
+func NewRemoteShellInator() *remoteShellInator {
+	r := &remoteShellInator { }
 	return r
 }
 
-func (o *remoteShell) RemoteShells() []string {
-	s := make([]string, 0)
-	return s
+func (r *remoteShellInator) RemoteShells() []exec.Cmd {
+	return r.remoteShells
 }
 
-func (o *remoteShell) Open(shell string) {
-	cmd := exec.Command("whoami")
-	cmd.Stdin = strings.NewReader("some input")
-	var out bytes.Buffer
-	cmd.Stdout = &out
-	err := cmd.Run()
+func (r *remoteShellInator) Open(shell string) {
+	cmd := exec.Command(shell)
+
+	cmdOutReader, err := cmd.StdoutPipe()
 	if err != nil {
-		log.Fatal(err)
+		fmt.Fprintln(os.Stderr, "Error creating StdoutPipe for Cmd", err)
 	}
-	fmt.Printf("in all caps: %q\n", out.String())
+
+	cmdErrReader, err := cmd.StderrPipe()
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "Error creating StdoutPipe for Cmd", err)
+	}
+
+	outScanner := bufio.NewScanner(cmdOutReader)
+	go func() {
+		for outScanner.Scan() {
+			fmt.Printf("out | %s\n", outScanner.Text())
+		}
+	}()
+
+	errScanner := bufio.NewScanner(cmdErrReader)
+	go func() {
+		for errScanner.Scan() {
+			fmt.Printf("out | %s\n", errScanner.Text())
+		}
+	}()
+
+	err = cmd.Start()
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "Error starting Cmd", err)
+	}
+
+	err = cmd.Wait()
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "Error waiting for Cmd", err)
+	}
+
+	r.remoteShells = append(r.remoteShells, *cmd)
 }
 
-func (o *remoteShell) Close(pid int) {
-
-}
-
-func (o *remoteShell) Write(pid int, data string) {
-
-}
-
-func (o *remoteShell) On(event Event, callback EventCallback) {
-	if event == Open {
-	
-	} else if event == Close {
-	
-	} else if event == Read {
-	
-	} else if event == Write {
-	
-	} else if event == Error {
-	
+func (r *remoteShellInator) Close(pid int) {
+	for i := range r.remoteShells {
+		if r.remoteShells[i].Process.Pid == pid {
+			// Found!
+		}
 	}
 }
+
+func (r *remoteShellInator) Write(pid int, data []byte) {
+	for i := range r.remoteShells {
+		if r.remoteShells[i].Process.Pid == pid {
+			// Found!
+		}
+	}
+}
+
+func (r *remoteShellInator) OnOpen(callback func (pid int, shell string)) {
+	r.onOpen = callback
+}
+
+func (r *remoteShellInator) OnClose(callback func (pid int)) {
+	r.onClose = callback
+}
+
+func (r *remoteShellInator) OnRead(callback func (pid int, shell string)) {
+	r.onRead = callback 
+}
+
+func (r *remoteShellInator) OnWrite(callback func (pid int, data string)) {
+	r.onWrite = callback 
+}
+
+func (r *remoteShellInator) OnError(callback func (pid int, error string)) {
+	r.onError = callback 
+}
+
