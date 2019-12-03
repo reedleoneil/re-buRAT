@@ -84,9 +84,25 @@ func main() {
 
 package main
 
-import "go-agent/inators/remoteshell"
-
+import (
+	"go-agent/inators/remoteshell"
+	"fmt"
+	"time"
+)
 func main() {
 	rs := remoteshell.NewRemoteShellInator()
+	rs.OnRead(func (pid int, data string) {
+		fmt.Printf("hello world! %d %s\n", pid, data)
+	})
 	rs.Open("cmd.exe")
+	rs.Open("powershell.exe")
+	time.Sleep(5000 * time.Millisecond)
+	rss := rs.RemoteShells()
+	for _, r := range rss {
+		fmt.Println(r.Process.Pid)
+		rs.Write(r.Process.Pid, "test")
+	}
+	for {
+		// do nothing
+	}
 }

@@ -1,7 +1,6 @@
 package remoteshell
 
 import (
-	"os"
 	"os/exec"
 	"fmt"
 	"bufio"
@@ -29,7 +28,22 @@ type remoteShellInator struct {
 }
 
 func NewRemoteShellInator() *remoteShellInator {
-	r := &remoteShellInator { }
+	r := &remoteShellInator {}
+	r.onOpen = func(pid int, shell string) {
+		fmt.Printf("remoteshell@open %d %s\n", pid, shell)
+	}
+	r.onClose = func(pid int) {
+		fmt.Printf("remoteshell@close %d\n", pid)
+	}
+	r.onRead = func(pid int, data string) {
+		fmt.Printf("remoteshell@read %d %s\n", pid, data)
+	}
+	r.onWrite = func(pid int, data string) {
+		fmt.Printf("remoteshell@write %d %s\n", pid, data)
+	}
+	r.onError = func(pid int, error string) {
+		fmt.Printf("remoteshell@error %d %s\n", pid, error)
+	}
 	return r
 }
 
@@ -42,53 +56,49 @@ func (r *remoteShellInator) Open(shell string) {
 
 	cmdOutReader, err := cmd.StdoutPipe()
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "Error creating StdoutPipe for Cmd", err)
+		r.onError(cmd.Process.Pid, err.Error())
 	}
 
 	cmdErrReader, err := cmd.StderrPipe()
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "Error creating StdoutPipe for Cmd", err)
+		r.onError(cmd.Process.Pid, err.Error())
 	}
 
 	outScanner := bufio.NewScanner(cmdOutReader)
 	go func() {
 		for outScanner.Scan() {
-			fmt.Printf("out | %s\n", outScanner.Text())
+			r.onRead(cmd.Process.Pid, outScanner.Text())
 		}
 	}()
 
 	errScanner := bufio.NewScanner(cmdErrReader)
 	go func() {
 		for errScanner.Scan() {
-			fmt.Printf("out | %s\n", errScanner.Text())
+			r.onError(cmd.Process.Pid, errScanner.Text())
 		}
 	}()
 
 	err = cmd.Start()
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "Error starting Cmd", err)
-	}
-
-	err = cmd.Wait()
-	if err != nil {
-		fmt.Fprintln(os.Stderr, "Error waiting for Cmd", err)
+		r.onError(cmd.Process.Pid, err.Error())
 	}
 
 	r.remoteShells = append(r.remoteShells, *cmd)
+	r.onOpen(cmd.Process.Pid, cmd.Path)
 }
 
 func (r *remoteShellInator) Close(pid int) {
 	for i := range r.remoteShells {
 		if r.remoteShells[i].Process.Pid == pid {
-			// Found!
+			//kill
 		}
 	}
 }
 
-func (r *remoteShellInator) Write(pid int, data []byte) {
+func (r *remoteShellInator) Write(pid int, data string) {
 	for i := range r.remoteShells {
 		if r.remoteShells[i].Process.Pid == pid {
-			// Found!
+			//write
 		}
 	}
 }
