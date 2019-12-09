@@ -5,11 +5,11 @@ module Bu
 		attr_reader :remote_shells
 		def initialize
 			@remote_shells = []
-			@on_open = lambda { |pid, shell| puts "remote_shell@on_open" }
-			@on_close = lambda { |pid| puts "remote_shell@on_close" }
-			@on_read = lambda { |pid, data| puts "remote_shell@on_read" }
-			@on_write = lambda { |pid, data| puts "remote_shell@on_write" }
-			@on_error = lambda { |pid, error| puts "remote_shell@on_error" }
+			@on_open = lambda { |pid, shell| puts "remote_shell@on_open pid => #{pid} shell => #{shell}" }
+			@on_close = lambda { |pid| puts "remote_shell@on_close pid => #{pid}" }
+			@on_read = lambda { |pid, data| puts "remote_shell@on_read pid => #{pid} data => #{data}" }
+			@on_write = lambda { |pid, data| puts "remote_shell@on_write pid => #{pid} data => #{data}" }
+			@on_error = lambda { |pid, error| puts "remote_shell@on_error pid => #{pid} error => #{error}" }
 		end
 
 		def on(event, &callback)
