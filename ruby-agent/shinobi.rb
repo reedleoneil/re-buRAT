@@ -161,10 +161,16 @@ filerw_inator.on :error do |file, error|
 	mqtt_client.publish(mqtt_topics[:filerw_onerror], packet.to_msgpack, false, 1)
 end
 
-mqtt_client.connect(mqtt_settings[:host], mqtt_settings[:port], mqtt_client.keep_alive, true, true)
-mqtt_topics.each { |key, value| mqtt_client.subscribe([value, 2]) }
+mqtt_client.connect
+mqtt_topics.each do |key, value|
+	if value.include? 'cmds' then
+		mqtt_client.subscribe([value, 2])
+		sleep 0.1
+	end
+end
 
 loop do
 	mqtt_client.loop_read
 	mqtt_client.loop_write
+	mqtt_client.loop_misc
 end
