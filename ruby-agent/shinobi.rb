@@ -3,6 +3,7 @@ require 'msgpacker'
 require 'ostruct'
 require 'securerandom'
 require 'os'
+require 'json'
 
 require_relative 'inators/remoteshell'
 require_relative 'inators/filerw'
@@ -40,7 +41,7 @@ mqtt_settings = {
 	:reconnect_limit => 3,
 	:reconnect_delay => 60,
 	:will_topic => mqtt_topics[:shinobi],
-	:will_payload => shinobi,
+	:will_payload => shinobi.to_json,
 	:will_qos => 2,
 	:will_retain => false
 }
