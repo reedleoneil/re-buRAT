@@ -161,7 +161,7 @@ filerw_inator.on :error do |file, error|
 	mqtt_client.publish(mqtt_topics[:filerw_onerror], packet.to_msgpack, false, 1)
 end
 
-mqtt_client.connect
+mqtt_client.connect(mqtt_client.host, mqtt_client.port, mqtt_client.keep_alive, mqtt_client.persistent, mqtt_client.blocking)
 mqtt_topics.each do |key, value|
 	if value.include? 'cmds' then
 		mqtt_client.subscribe([value, 2])
