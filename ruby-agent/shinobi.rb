@@ -38,6 +38,7 @@ mqtt_settings = {
 	:host => 'localhost',
 	:port => 1883,
 	:persistent => true,
+	:blocking => true,
 	:reconnect_limit => 3,
 	:reconnect_delay => 60,
 	:will_topic => mqtt_topics[:shinobi],
@@ -170,8 +171,14 @@ mqtt_topics.each do |key, value|
 	end
 end
 
+Thread.new do
+	loop do
+		mqtt_client.publish(mqtt_topics[:shinobi], shinobi.to_msgpack, false, 1)
+		sleep mqtt_client.keep_alive
+	end
+end
+
 loop do
 	mqtt_client.loop_read
 	mqtt_client.loop_write
-	mqtt_client.loop_misc
 end
