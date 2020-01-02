@@ -10,8 +10,8 @@ require_relative 'inators/filerw'
 
 shinobi = {
 	:id => SecureRandom.hex(2),
-	:host => OS.windows? ? `ver` : `uname -a`,
-	:user => `whoami`,
+	:host => (OS.windows? ? `ver` : `uname -sr`).strip,
+	:user => OS.windows? ? `whoami`.strip : `uname -n`.strip + '\\' + `whoami`.strip,
 	:status => :offline
 }
 
