@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"bufio"
 	"io"
+	"syscall"
 )
 
 type remoteShell struct {
@@ -51,7 +52,8 @@ func (r *remoteShellInator) RemoteShells() []remoteShell {
 
 func (r *remoteShellInator) Open(shell string) {
 	cmd := exec.Command(shell)
-
+	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
+	
 	cmdInReader, err := cmd.StdinPipe()
 	if err != nil {
 		r.onError(cmd.Process.Pid, err.Error())
@@ -100,7 +102,11 @@ func (r *remoteShellInator) Open(shell string) {
 func (r *remoteShellInator) Close(pid int) {
 	for i := range r.remoteShells {
 		if r.remoteShells[i].Cmd.Process.Pid == pid {
-			//kill
+			pgid, err := syscall.Getpgid(r.remoteShells[i].Cmd.Process.Pid)
+			if err == nil {
+			    syscall.Kill(-pgid, syscall.SIGKILL)
+			}
+			r.onClose(r.remoteShells[i].Cmd.Process.Pid)
 		}
 	}
 }
@@ -109,6 +115,7 @@ func (r *remoteShellInator) Write(pid int, data string) {
 	for i := range r.remoteShells {
 		if r.remoteShells[i].Cmd.Process.Pid == pid {
 			io.WriteString(r.remoteShells[i].Stdin, data)
+			r.onWrite(r.remoteShells[i].Cmd.Process.Pid, data)
 		}
 	}
 }

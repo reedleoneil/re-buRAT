@@ -102,7 +102,11 @@ func main() {
 	time.Sleep(5000 * time.Millisecond)
 	rss := rs.RemoteShells()
 	for _, r := range rss {
-		rs.Write(r.Cmd.Process.Pid, "who\n\r")
+		rs.Write(r.Cmd.Process.Pid, "ping google.com\n\r")
+	}
+	time.Sleep(5000 * time.Millisecond)
+	for _, r := range rss {
+		rs.Close(r.Cmd.Process.Pid)
 	}
 	for {
 		// do nothing
