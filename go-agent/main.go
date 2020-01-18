@@ -92,15 +92,17 @@ import (
 func main() {
 	rs := remoteshell.NewRemoteShellInator()
 	rs.OnRead(func (pid int, data string) {
-		fmt.Printf("hello world! %d %s\n", pid, data)
+		fmt.Printf("red@read %d %s\n", pid, data)
 	})
-	rs.Open("cmd.exe")
-	rs.Open("powershell.exe")
+	rs.OnError(func (pid int, error string) {
+		fmt.Printf("red@error %d %s\n", pid, error)
+	})
+	rs.Open("bash")
+	rs.Open("bash")
 	time.Sleep(5000 * time.Millisecond)
 	rss := rs.RemoteShells()
 	for _, r := range rss {
-		fmt.Println(r.Process.Pid)
-		rs.Write(r.Process.Pid, "test")
+		rs.Write(r.Cmd.Process.Pid, "who\n\r")
 	}
 	for {
 		// do nothing

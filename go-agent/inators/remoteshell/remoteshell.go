@@ -4,10 +4,18 @@ import (
 	"os/exec"
 	"fmt"
 	"bufio"
+	"io"
 )
 
+type remoteShell struct {
+	Stdin	io.WriteCloser
+	Stdout 	io.ReadCloser
+	Stderr	io.ReadCloser
+	Cmd	*exec.Cmd
+}
+
 type RemoteShellInator interface {
-	RemoteShells() []exec.Cmd
+	RemoteShells() []remoteShell
 	Open(shell string)
 	Close(pid int)
 	Write(pid int, data string)
@@ -19,40 +27,35 @@ type RemoteShellInator interface {
 }
 
 type remoteShellInator struct {
-	remoteShells	[]exec.Cmd
-	onOpen			func(pid int, shell string)
-	onClose			func(pid int)			
-	onRead			func(pid int, data string)	
-	onWrite			func(pid int, data string)	
-	onError			func(pid int, error string)	
+	remoteShells	[]remoteShell
+	onOpen		func(pid int, shell string)
+	onClose		func(pid int)			
+	onRead		func(pid int, data string)	
+	onWrite		func(pid int, data string)	
+	onError		func(pid int, error string)	
 }
 
 func NewRemoteShellInator() *remoteShellInator {
 	r := &remoteShellInator {}
-	r.onOpen = func(pid int, shell string) {
-		fmt.Printf("remoteshell@open %d %s\n", pid, shell)
-	}
-	r.onClose = func(pid int) {
-		fmt.Printf("remoteshell@close %d\n", pid)
-	}
-	r.onRead = func(pid int, data string) {
-		fmt.Printf("remoteshell@read %d %s\n", pid, data)
-	}
-	r.onWrite = func(pid int, data string) {
-		fmt.Printf("remoteshell@write %d %s\n", pid, data)
-	}
-	r.onError = func(pid int, error string) {
-		fmt.Printf("remoteshell@error %d %s\n", pid, error)
-	}
+	r.onOpen = func(pid int, shell string) { fmt.Printf("remoteshell@open %d %s\n", pid, shell) }
+	r.onClose = func(pid int) { fmt.Printf("remoteshell@close %d\n", pid) }
+	r.onRead = func(pid int, data string) { fmt.Printf("remoteshell@read %d %s\n", pid, data) }
+	r.onWrite = func(pid int, data string) { fmt.Printf("remoteshell@write %d %s\n", pid, data) }
+	r.onError = func(pid int, error string) { fmt.Printf("remoteshell@error %d %s\n", pid, error) }
 	return r
 }
 
-func (r *remoteShellInator) RemoteShells() []exec.Cmd {
+func (r *remoteShellInator) RemoteShells() []remoteShell {
 	return r.remoteShells
 }
 
 func (r *remoteShellInator) Open(shell string) {
 	cmd := exec.Command(shell)
+
+	cmdInReader, err := cmd.StdinPipe()
+	if err != nil {
+		r.onError(cmd.Process.Pid, err.Error())
+	}
 
 	cmdOutReader, err := cmd.StdoutPipe()
 	if err != nil {
@@ -83,13 +86,20 @@ func (r *remoteShellInator) Open(shell string) {
 		r.onError(cmd.Process.Pid, err.Error())
 	}
 
-	r.remoteShells = append(r.remoteShells, *cmd)
+	rs := remoteShell{
+		cmdInReader,
+		cmdOutReader,
+		cmdErrReader,
+		cmd,
+	}
+
+	r.remoteShells = append(r.remoteShells, rs)
 	r.onOpen(cmd.Process.Pid, cmd.Path)
 }
 
 func (r *remoteShellInator) Close(pid int) {
 	for i := range r.remoteShells {
-		if r.remoteShells[i].Process.Pid == pid {
+		if r.remoteShells[i].Cmd.Process.Pid == pid {
 			//kill
 		}
 	}
@@ -97,8 +107,8 @@ func (r *remoteShellInator) Close(pid int) {
 
 func (r *remoteShellInator) Write(pid int, data string) {
 	for i := range r.remoteShells {
-		if r.remoteShells[i].Process.Pid == pid {
-			//write
+		if r.remoteShells[i].Cmd.Process.Pid == pid {
+			io.WriteString(r.remoteShells[i].Stdin, data)
 		}
 	}
 }
