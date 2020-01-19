@@ -86,10 +86,12 @@ package main
 
 import (
 	"go-agent/inators/remoteshell"
+	"go-agent/inators/filerw"
 	"fmt"
 	"time"
 )
 func main() {
+	//RemoteShell
 	rs := remoteshell.NewRemoteShellInator()
 	rs.OnRead(func (pid int, data string) {
 		fmt.Printf("red@read %d %s\n", pid, data)
@@ -108,6 +110,22 @@ func main() {
 	for _, r := range rss {
 		rs.Close(r.Cmd.Process.Pid)
 	}
+
+	//FileReadWrite
+	frw := filerw.NewFileReadWriteInator()
+
+	frw.OnRead(func (file string, length int, offset int, data []byte) {
+		fmt.Printf("redfrw@read %s %s\n", file, data)
+	})
+
+	frw.OnWrite(func (file string, data []byte, offset int, length int) {
+		fmt.Printf("redfrw@write %s %d\n", file, offset)
+	})
+
+	frw.Read("test.txt", 100, 1)
+	frw.Write("test.txt", []byte("ONE OK ROCK"), 123)
+
+	//Loop
 	for {
 		// do nothing
 	}
