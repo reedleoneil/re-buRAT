@@ -1,7 +1,7 @@
 package filerw
 
 import(
-	_"os"
+	"os"
 	"fmt"
 )
 
@@ -29,24 +29,42 @@ func NewFileReadWriteInator() *fileReadWriteInator {
 }
 
 func (frw *fileReadWriteInator) Read(file string, length int, offset int) {
-	data := []byte("ONE OK ROCK") //test data
+	data := make([]byte, length)
+	f, err := os.OpenFile(file, os.O_RDWR|os.O_CREATE, 0755)
+	if err != nil {
+		frw.onError(file, "READ",err.Error())
+	}
+	f.ReadAt(data, int64(offset))
+	if err := f.Close(); err != nil {
+		frw.onError(file, "READ",err.Error())
+	}
 	frw.onRead(file, length, offset, data)
 }
 
 func (frw *fileReadWriteInator) Write(file string, data []byte, offset int) {
-	length := 10969	//test length
+	f, err := os.OpenFile(file, os.O_RDWR|os.O_CREATE, 0755)
+	if err != nil {
+		frw.onError(file, "WRITE",err.Error())
+	}
+	length, err := f.WriteAt(data, int64(offset))
+	if err != nil {
+		frw.onError(file, "WRITE",err.Error())
+	}
+	if err := f.Close(); err != nil {
+		frw.onError(file, "WRITE",err.Error())
+	}
 	frw.onWrite(file, data, offset, length)
 }
 
 func (frw *fileReadWriteInator) OnRead(callback func (file string, length int, offset int, data []byte)) {
-	frw.onRead = callback 
+	frw.onRead = callback
 }
 
 func (frw *fileReadWriteInator) OnWrite(callback func (file string, data []byte, offset int, length int)) {
-	frw.onWrite = callback 
+	frw.onWrite = callback
 }
 
 func (frw *fileReadWriteInator) OnError(callback func (file string, mode string, error string)) {
-	frw.onError = callback 
+	frw.onError = callback
 }
 

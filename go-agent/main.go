@@ -15,7 +15,7 @@ func main() {
 	cmd := exec.Command(cmdName, cmdArgs...)
 	cmdReader, err := cmd.StdoutPipe()
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "Error creating StdoutPipe for Cmd", err)
+		fmt.Fprintln(os.Stderr, "Error creating Stdou tPipe for Cmd", err)
 		os.Exit(1)
 	}
 
@@ -101,12 +101,12 @@ func main() {
 	})
 	rs.Open("bash")
 	rs.Open("bash")
-	time.Sleep(5000 * time.Millisecond)
+	time.Sleep(100 * time.Millisecond)
 	rss := rs.RemoteShells()
 	for _, r := range rss {
 		rs.Write(r.Cmd.Process.Pid, "ping google.com\n\r")
 	}
-	time.Sleep(5000 * time.Millisecond)
+	time.Sleep(100 * time.Millisecond)
 	for _, r := range rss {
 		rs.Close(r.Cmd.Process.Pid)
 	}
@@ -115,15 +115,15 @@ func main() {
 	frw := filerw.NewFileReadWriteInator()
 
 	frw.OnRead(func (file string, length int, offset int, data []byte) {
-		fmt.Printf("redfrw@read %s %s\n", file, data)
+		fmt.Printf("redfrw@read %s %d %d %s\n", file, length, offset, string(data))
 	})
 
 	frw.OnWrite(func (file string, data []byte, offset int, length int) {
-		fmt.Printf("redfrw@write %s %d\n", file, offset)
+		fmt.Printf("redfrw@write %s %s %d %d\n", file, data, offset, length)
 	})
 
-	frw.Read("test.txt", 100, 1)
-	frw.Write("test.txt", []byte("ONE OK ROCK"), 123)
+	frw.Read("test.txt", 1024, 4)
+	frw.Write("test.txt", []byte("ONE OK ROCK"), 11)
 
 	//Loop
 	for {
