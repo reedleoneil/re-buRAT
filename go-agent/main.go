@@ -1,87 +1,3 @@
-/*package main
-
-import (
-	"bufio"
-	"fmt"
-	"os"
-	"os/exec"
-)
-
-func main() {
-	// docker build current directory
-	cmdName := "cmd.exe"
-	cmdArgs := []string{"google.com", "-t"}
-
-	cmd := exec.Command(cmdName, cmdArgs...)
-	cmdReader, err := cmd.StdoutPipe()
-	if err != nil {
-		fmt.Fprintln(os.Stderr, "Error creating Stdou tPipe for Cmd", err)
-		os.Exit(1)
-	}
-
-	scanner := bufio.NewScanner(cmdReader)
-	go func() {
-		for scanner.Scan() {
-			fmt.Printf("docker build out | %s\n", scanner.Text())
-		}
-	}()
-
-	err = cmd.Start()
-	if err != nil {
-		fmt.Fprintln(os.Stderr, "Error starting Cmd", err)
-		os.Exit(1)
-	}
-
-	err = cmd.Wait()
-	if err != nil {
-		fmt.Fprintln(os.Stderr, "Error waiting for Cmd", err)
-		os.Exit(1)
-	}
-
-	for {
-		//do nothing
-	}
-}
-
-package main
-
-import (
-	"os"
-	"fmt"
-	"io"
-)
-
-func main() {
-	f, err := os.OpenFile("notes.txt", os.O_RDWR|os.O_CREATE, 0755)
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	buffer := make([]byte, 1024)
-	n, err := f.ReadAt(buffer, 0)
-
-	if err != nil && err != io.EOF {
-                 panic(err)
-    }
-
-    fmt.Println(string(buffer[:n]))
-	
-	b := []byte("putang ina mo")
-	fmt.Println(b)
-
-	x, err := f.WriteAt(b, 0)
-	if err != nil && err != io.EOF {
-                 panic(err)
-    }
-
-	fmt.Println(x)
-
-	if err := f.Close(); err != nil {
-		fmt.Println(err)
-	}
-}
-*/
-
 package main
 
 import (
@@ -89,7 +5,11 @@ import (
 	"go-agent/inators/filerw"
 	"fmt"
 	"time"
+	"strconv"
+	
+	"github.com/eclipse/paho.mqtt.golang"
 )
+
 func main() {
 	//RemoteShell
 	rs := remoteshell.NewRemoteShellInator()
@@ -124,6 +44,57 @@ func main() {
 
 	frw.Read("test.txt", 1024, 4)
 	frw.Write("test.txt", []byte("ONE OK ROCK"), 11)
+
+	//MQTT Client
+	rsOpenHandler := func (client mqtt.Client, msg mqtt.Message) {
+		rs.Open(string(msg.Payload()))
+	}
+
+	rsCloseHandler := func (client mqtt.Client, msg mqtt.Message) {
+		byteToInt, _ := strconv.Atoi(string(msg.Payload()))
+		rs.Close(byteToInt)
+	}
+
+	rslWriteHandler := func (client mqtt.Client, msg mqtt.Message) {
+		byteToInt, _ := strconv.Atoi(string(msg.Payload()))
+		cmd := "whoami\n\r"
+		rs.Write(byteToInt, cmd)
+	}
+
+	filerwReadHandler := func (client mqtt.Client, msg mqtt.Message) {
+		//frw.Read(string(msg.Payload()))
+	}
+
+	filerwWriteHandler := func (client mqtt.Client, msg mqtt.Message) {
+		//frw.Write(string(msg.Payload()))
+	}
+
+	opts := mqtt.NewClientOptions().AddBroker("tcp://localhost:1883")
+
+	c := mqtt.NewClient(opts)
+	if token := c.Connect(); token.Wait() && token.Error() != nil {
+		panic(token.Error())
+	}
+
+	if token := c.Subscribe("/rs/open", 0, rsOpenHandler); token.Wait() && token.Error() != nil {
+		fmt.Println(token.Error())
+	}
+
+	if token := c.Subscribe("/rs/close", 0, rsCloseHandler); token.Wait() && token.Error() != nil {
+		fmt.Println(token.Error())
+	}
+
+	if token := c.Subscribe("/rs/write", 0, rslWriteHandler); token.Wait() && token.Error() != nil {
+		fmt.Println(token.Error())
+	}
+
+	if token := c.Subscribe("/frw/read", 0, filerwReadHandler); token.Wait() && token.Error() != nil {
+		fmt.Println(token.Error())
+	}
+
+	if token := c.Subscribe("/frw/write", 0, filerwWriteHandler); token.Wait() && token.Error() != nil {
+		fmt.Println(token.Error())
+	}
 
 	//Loop
 	for {
