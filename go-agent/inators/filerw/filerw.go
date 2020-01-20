@@ -32,11 +32,11 @@ func (frw *fileReadWriteInator) Read(file string, length int, offset int) {
 	data := make([]byte, length)
 	f, err := os.OpenFile(file, os.O_RDWR|os.O_CREATE, 0755)
 	if err != nil {
-		frw.onError(file, "READ",err.Error())
+		frw.onError(file, "READ", err.Error())
 	}
 	f.ReadAt(data, int64(offset))
 	if err := f.Close(); err != nil {
-		frw.onError(file, "READ",err.Error())
+		frw.onError(file, "READ", err.Error())
 	}
 	frw.onRead(file, length, offset, data)
 }
@@ -44,14 +44,14 @@ func (frw *fileReadWriteInator) Read(file string, length int, offset int) {
 func (frw *fileReadWriteInator) Write(file string, data []byte, offset int) {
 	f, err := os.OpenFile(file, os.O_RDWR|os.O_CREATE, 0755)
 	if err != nil {
-		frw.onError(file, "WRITE",err.Error())
+		frw.onError(file, "WRITE", err.Error())
 	}
 	length, err := f.WriteAt(data, int64(offset))
 	if err != nil {
-		frw.onError(file, "WRITE",err.Error())
+		frw.onError(file, "WRITE", err.Error())
 	}
 	if err := f.Close(); err != nil {
-		frw.onError(file, "WRITE",err.Error())
+		frw.onError(file, "WRITE", err.Error())
 	}
 	frw.onWrite(file, data, offset, length)
 }
