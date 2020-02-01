@@ -16,9 +16,9 @@ shinobi = {
 }
 
 mqtt_topics = {
-	:shinobi				=> "/bu/shinobi/#{shinobi[:id]}",
-	:remoteshell			=> "/bu/shinobi/#{shinobi[:id]}/inators/remoteshell",
-	:remoteshell_open		=> "/bu/shinobi/#{shinobi[:id]}/inators/remoteshell/cmds/open",
+	:shinobi							=> "/bu/shinobi/#{shinobi[:id]}",
+	:remoteshell					=> "/bu/shinobi/#{shinobi[:id]}/inators/remoteshell",
+	:remoteshell_open			=> "/bu/shinobi/#{shinobi[:id]}/inators/remoteshell/cmds/open",
 	:remoteshell_close		=> "/bu/shinobi/#{shinobi[:id]}/inators/remoteshell/cmds/close",
 	:remoteshell_write		=> "/bu/shinobi/#{shinobi[:id]}/inators/remoteshell/cmds/write",
 	:remoteshell_onopen		=> "/bu/shinobi/#{shinobi[:id]}/inators/remoteshell/events/open",
@@ -26,12 +26,12 @@ mqtt_topics = {
 	:remoteshell_onread		=> "/bu/shinobi/#{shinobi[:id]}/inators/remoteshell/events/read",
 	:remoteshell_onwrite	=> "/bu/shinobi/#{shinobi[:id]}/inators/remoteshell/events/write",
 	:remoteshell_onerror	=> "/bu/shinobi/#{shinobi[:id]}/inators/remoteshell/events/error",
-	:filerw					=> "/bu/shinobi/#{shinobi[:id]}/inators/filerw",
-	:filerw_read			=> "/bu/shinobi/#{shinobi[:id]}/inators/filerw/cmds/read",
-	:filerw_write			=> "/bu/shinobi/#{shinobi[:id]}/inators/filerw/cmds/write",
-	:filerw_onread			=> "/bu/shinobi/#{shinobi[:id]}/inators/filerw/events/read",
-	:filerw_onwrite			=> "/bu/shinobi/#{shinobi[:id]}/inators/filerw/events/write",
-	:filerw_error			=> "/bu/shinobi/#{shinobi[:id]}/inators/filerw/events/error"
+	:filerw								=> "/bu/shinobi/#{shinobi[:id]}/inators/filerw",
+	:filerw_read					=> "/bu/shinobi/#{shinobi[:id]}/inators/filerw/cmds/read",
+	:filerw_write					=> "/bu/shinobi/#{shinobi[:id]}/inators/filerw/cmds/write",
+	:filerw_onread				=> "/bu/shinobi/#{shinobi[:id]}/inators/filerw/events/read",
+	:filerw_onwrite				=> "/bu/shinobi/#{shinobi[:id]}/inators/filerw/events/write",
+	:filerw_error					=> "/bu/shinobi/#{shinobi[:id]}/inators/filerw/events/error"
 }
 
 mqtt_settings = {
@@ -54,7 +54,7 @@ filerw_inator = Bu::FileReadWriteInator.new
 mqtt_client.on_connack do
 	shinobi[:status] = :online
 	mqtt_client.publish(mqtt_topics[:shinobi], shinobi.to_msgpack, false, 1)
-end 
+end
 
 mqtt_client.add_topic_callback(mqtt_topics[:remoteshell_open]) do |packet|
 	packet = OpenStruct.new MessagePack.unpack(packet.payload)

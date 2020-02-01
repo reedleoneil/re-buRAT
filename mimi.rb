@@ -11,6 +11,11 @@ client.subscribe(["/bu/#", 2])
 
 @shinobis = []
 
+client.add_topic_callback("/bu/#") do |p|
+	#cursor = TTY::Cursor
+	#print cursor.move_to(7, 7)
+end
+
 client.add_topic_callback("/bu/shinobi/+") do |p|
 	begin
 		#puts "Topic: #{p.topic}\nPayload: #{MessagePack.unpack p.payload}\nQoS: #{p.qos}"
@@ -35,9 +40,9 @@ def test(payload)
 	else
 		@shinobis << [payload["id"], payload["host"], payload["user"], payload["status"]]
 	end
-	cursor = TTY::Cursor
-	print cursor.clear_screen_down
-	print cursor.move_to(0, 0)
+	#cursor = TTY::Cursor
+	#print cursor.clear_screen_down
+	#print cursor.move_to(0, 0)
 	table = TTY::Table.new header: ['ID', 'HOST', 'USER', 'STATUS'], rows: @shinobis
 	puts table.render(:unicode)
 end
