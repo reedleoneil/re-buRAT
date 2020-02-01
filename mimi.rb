@@ -14,6 +14,8 @@ client.subscribe(["/bu/#", 2])
 client.add_topic_callback("/bu/#") do |p|
 	#cursor = TTY::Cursor
 	#print cursor.move_to(7, 7)
+	payload = MessagePack.unpack p.payload
+	puts payload
 end
 
 client.add_topic_callback("/bu/shinobi/+") do |p|
@@ -30,7 +32,7 @@ end
 
 def test(payload)
 	if @shinobis.any? { |shinobi| shinobi[0].to_s == payload["id"] } then
-		@shinobis.map! do |shinobi| 
+		@shinobis.map! do |shinobi|
 			if shinobi[0] == payload["id"] then
 				shinobi = [payload["id"], payload["host"], payload["user"], payload["status"]]
 			else

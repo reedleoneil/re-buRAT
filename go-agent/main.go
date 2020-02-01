@@ -1,6 +1,7 @@
 package main
 
 import (
+	"go-agent/packets"
 	"go-agent/inators/filerw"
 	"go-agent/inators/remoteshell"
 
@@ -10,70 +11,6 @@ import (
 	"github.com/vmihailenco/msgpack"
 )
 
-type IdentificationPacket struct {
-	Id			string	`msgpack:"id"`
-	Host		string	`msgpack:"host"`
-	User		string	`msgpack:"user"`
-	Status	string	`msgpack:"status"`
-}
-
-type RemoteShellOpenPacket struct {
-	Shell		string	`msgpack:"shell"`
-}
-
-type RemoteShellClosePacket struct {
-	Pid			int			`msgpack:"pid"`
-}
-
-type RemoteShellWritePacket struct {
-	Pid			int			`msgpack:"pid"`
-	Data		string	`msgpack:"data"`
-}
-
-type RemoteShellOnOpenPacket struct {
-	Pid 		int			`msgpack:"pid"`
-	Shell		string	`msgpack:"shell"`
-}
-
-type RemoteShellOnClosePacket struct {
-	Pid 		int			`msgpack:"pid"`
-}
-
-type RemoteShellOnReadPacket struct {
-	Pid			int			`msgpack:"pid"`
-	Data		string	`msgpack:"data"`
-}
-
-type RemoteShellOnWritePacket struct {
-	Pid			int			`msgpack:"pid"`
-	Data		string	`msgpack:"data"`
-}
-
-type RemoteShellOnErrorPacket struct {
-	Pid			int			`msgpack:"pid"`
-	Error		string	`msgpack:"error"`
-}
-
-type FileReadWriteOnReadPacket struct {
-	File 		string	`msgpack:"file"`
-	Length 	int			`msgpack:"length"`
-	Offset 	int			`msgpack:"offset"`
-	Data 		[]byte	`msgpack:"data"`
-}
-
-type FileReadWriteOnWritePacket struct {
-	File 		string	`msgpack:"file"`
-	//Data 	[]byte
-	Offset 	int			`msgpack:"offset"`
-	Length 	int			`msgpack:"length"`
-}
-
-type FileReadWriteOnErrorPacket struct {
-	File 		string	`msgpack:"file"`
-	Mode		string	`msgpack:"mode"`
-	Error		string	`msgpack:"error"`
-}
-
 func main() {
 	opts := mqtt.NewClientOptions().AddBroker("tcp://localhost:1883")
 
@@ -82,48 +19,48 @@ func main() {
 	frw := filerw.NewFileReadWriteInator()
 
 	rs.OnOpen(func (pid int, shell string) {
-		b, _ := msgpack.Marshal(&RemoteShellOnOpenPacket{Pid: pid, Shell: shell})
-		c.Publish("/rs/onopen", 0, false, b)
+		b, _ := msgpack.Marshal(&packets.RemoteShellOnOpenPacket{Pid: pid, Shell: shell})
+		c.Publish("/bu/shinobi/123D/inators/remoteshell/events/open", 0, false, b)
 		fmt.Println(pid)
 	})
 
 	rs.OnClose(func (pid int) {
-		b, _ := msgpack.Marshal(&RemoteShellOnClosePacket{Pid: pid})
-		c.Publish("/rs/onclose", 0, false, b)
+		b, _ := msgpack.Marshal(&packets.RemoteShellOnClosePacket{Pid: pid})
+		c.Publish("/bu/shinobi/123D/inators/remoteshell/events/close", 0, false, b)
 	})
 
 	rs.OnRead(func (pid int, data string) {
-		b, _ := msgpack.Marshal(&RemoteShellOnReadPacket{Pid: pid, Data: data})
-		c.Publish("/rs/onread", 0, false, b)
+		b, _ := msgpack.Marshal(&packets.RemoteShellOnReadPacket{Pid: pid, Data: data})
+		c.Publish("/bu/shinobi/123D/inators/remoteshell/events/read", 0, false, b)
 	})
 
 	rs.OnWrite(func (pid int, data string) {
-		b, _ := msgpack.Marshal(&RemoteShellOnWritePacket{Pid: pid, Data: data})
-		c.Publish("/rs/onwrite", 0, false, b)
+		b, _ := msgpack.Marshal(&packets.RemoteShellOnWritePacket{Pid: pid, Data: data})
+		c.Publish("/bu/shinobi/123D/inators/remoteshell/events/write", 0, false, b)
 	})
 
 	rs.OnError(func (pid int, error string) {
-		b, _ := msgpack.Marshal(&RemoteShellOnErrorPacket{Pid: pid, Error: error})
-		c.Publish("/rs/onerror", 0, false, b)
+		b, _ := msgpack.Marshal(&packets.RemoteShellOnErrorPacket{Pid: pid, Error: error})
+		c.Publish("/bu/shinobi/123D/inators/remoteshell/events/error", 0, false, b)
 	})
 
 	frw.OnRead(func (file string, length int, offset int, data []byte) {
-		b, _ := msgpack.Marshal(&FileReadWriteOnReadPacket{File: file, Length: length, Offset: offset, Data: data})
-		c.Publish("/frw/onread", 0, false, b)
+		b, _ := msgpack.Marshal(&packets.FileReadWriteOnReadPacket{File: file, Length: length, Offset: offset, Data: data})
+		c.Publish("/bu/shinobi/123D/inators/filerw/events/read", 0, false, b)
 	})
 
 	frw.OnWrite(func (file string, data []byte, offset int, length int) {
-		b, _ := msgpack.Marshal(&FileReadWriteOnWritePacket{File: file, Offset: offset, Length: length})
-		c.Publish("/frw/onwrite", 0, false, b)
+		b, _ := msgpack.Marshal(&packets.FileReadWriteOnWritePacket{File: file, Offset: offset, Length: length})
+		c.Publish("/bu/shinobi/123D/inators/filerw/events/write", 0, false, b)
 	})
 
 	frw.OnError(func (file string, mode string, error string) {
-		b, _ := msgpack.Marshal(&FileReadWriteOnErrorPacket{File: file, Mode: mode, Error: error})
-		c.Publish("/frw/onerror", 0, false, b)
+		b, _ := msgpack.Marshal(&packets.FileReadWriteOnErrorPacket{File: file, Mode: mode, Error: error})
+		c.Publish("/bu/shinobi/123D/inators/filerw/events/error", 0, false, b)
 	})
 
 	rsOpenHandler := func (client mqtt.Client, msg mqtt.Message) {
-		var packet RemoteShellOpenPacket
+		var packet packets.RemoteShellOpenPacket
 		err := msgpack.Unmarshal(msg.Payload(), &packet)
 		if err != nil {
 			panic(err)
@@ -133,7 +70,7 @@ func main() {
 	}
 
 	rsCloseHandler := func (client mqtt.Client, msg mqtt.Message) {
-		var packet RemoteShellClosePacket
+		var packet packets.RemoteShellClosePacket
 		err := msgpack.Unmarshal(msg.Payload(), &packet)
 		if err != nil {
 			panic(err)
@@ -143,7 +80,7 @@ func main() {
 	}
 
 	rslWriteHandler := func (client mqtt.Client, msg mqtt.Message) {
-		var packet RemoteShellWritePacket
+		var packet packets.RemoteShellWritePacket
 		err := msgpack.Unmarshal(msg.Payload(), &packet)
 		if err != nil {
 			panic(err)
@@ -153,19 +90,29 @@ func main() {
 	}
 
 	filerwReadHandler := func (client mqtt.Client, msg mqtt.Message) {
-		//frw.Read(string(msg.Payload()))
-		//frw.Read("test.txt", 1024, 4)
+		var packet packets.FileReadWriteReadPacket
+		err := msgpack.Unmarshal(msg.Payload(), &packet)
+		if err != nil {
+			panic(err)
+		} else {
+			frw.Read(packet.File, packet.Length, packet.Offset)
+		}
 	}
 
 	filerwWriteHandler := func (client mqtt.Client, msg mqtt.Message) {
-		//frw.Write(string(msg.Payload()))
-		//frw.Write("test.txt", []byte("ONE OK ROCK"), 11)
+		var packet packets.FileReadWriteWritePacket
+		err := msgpack.Unmarshal(msg.Payload(), &packet)
+		if err != nil {
+			panic(err)
+		} else {
+			frw.Write(packet.File, packet.Data, packet.Offset)
+		}
 	}
 
 	if token := c.Connect(); token.Wait() && token.Error() != nil {
 		panic(token.Error())
 	} else {
-		payload, _ := msgpack.Marshal(&IdentificationPacket {
+		payload, _ := msgpack.Marshal(&packets.IdentificationPacket {
 			Id: "123D",
 			Host: "go-agent",
 			User: "reedleoneil",
@@ -174,23 +121,23 @@ func main() {
 		c.Publish("/bu/shinobi/" + "123D", 0, false, payload)
 	}
 
-	if token := c.Subscribe("/rs/open", 0, rsOpenHandler); token.Wait() && token.Error() != nil {
+	if token := c.Subscribe("/bu/shinobi/123D/inators/remoteshell/cmds/open", 0, rsOpenHandler); token.Wait() && token.Error() != nil {
 		fmt.Println(token.Error())
 	}
 
-	if token := c.Subscribe("/rs/close", 0, rsCloseHandler); token.Wait() && token.Error() != nil {
+	if token := c.Subscribe("/bu/shinobi/123D/inators/remoteshell/cmds/close", 0, rsCloseHandler); token.Wait() && token.Error() != nil {
 		fmt.Println(token.Error())
 	}
 
-	if token := c.Subscribe("/rs/write", 0, rslWriteHandler); token.Wait() && token.Error() != nil {
+	if token := c.Subscribe("/bu/shinobi/123D/inators/remoteshell/cmds/write", 0, rslWriteHandler); token.Wait() && token.Error() != nil {
 		fmt.Println(token.Error())
 	}
 
-	if token := c.Subscribe("/frw/read", 0, filerwReadHandler); token.Wait() && token.Error() != nil {
+	if token := c.Subscribe("/bu/shinobi/123D/inators/filerw/cmds/read", 0, filerwReadHandler); token.Wait() && token.Error() != nil {
 		fmt.Println(token.Error())
 	}
 
-	if token := c.Subscribe("/frw/write", 0, filerwWriteHandler); token.Wait() && token.Error() != nil {
+	if token := c.Subscribe("/bu/shinobi/123D/inators/filerw/cmds/write", 0, filerwWriteHandler); token.Wait() && token.Error() != nil {
 		fmt.Println(token.Error())
 	}
 

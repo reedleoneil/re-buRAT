@@ -3,7 +3,7 @@ require 'msgpacker'
 require 'ostruct'
 
 client = PahoMqtt::Client.new
-client.connect('broker.hivemq.com', 1883, client.keep_alive, true, true)
+client.connect('localhost', 1883, client.keep_alive, true, true)
 client.subscribe(["/bu/#", 2])
 
 client.add_topic_callback("/bu/shinobi/#{ARGV[1]}/inators/filerw/events/read") do |packet|
@@ -14,9 +14,9 @@ end
 client.add_topic_callback("/bu/shinobi/#{ARGV[1]}/inators/remoteshell/events/read") do |packet|
 	packet = OpenStruct.new MessagePack.unpack(packet.payload)
 	if ARGV[4] then
-		File.binwrite(ARGV[4], packet.data, File.exists?(ARGV[4]) ? File.size(ARGV[4]) + 1 : 0) 
-	else 
-		puts packet.data 
+		File.binwrite(ARGV[4], packet.data, File.exists?(ARGV[4]) ? File.size(ARGV[4]) + 1 : 0)
+	else
+		puts packet.data
 	end
 end
 
