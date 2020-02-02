@@ -49,8 +49,8 @@ mqtt_settings = {
 }
 
 mqtt_client = PahoMqtt::Client.new(mqtt_settings)
-remoteshell_inator = Bu::RemoteShellInator.new
-filerw_inator = Bu::FileReadWriteInator.new
+remoteshell_inator = Inator::RemoteShell.new
+filerw_inator = Inator::FileReadWrite.new
 
 mqtt_client.on_connack do
 	shinobi[:status] = :online

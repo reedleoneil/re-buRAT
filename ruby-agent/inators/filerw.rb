@@ -1,5 +1,5 @@
-module Bu
-	class FileReadWriteInator
+module Inator
+	class FileReadWrite
 		def initialize
 			@on_read = lambda { |file, length, offset, data| puts "file_rw@on_read file => #{file} length => #{length} offset => #{offset} data => #{data}" }
 			@on_write = lambda { |file, data, offset, length| puts "file_rw@on_write file => #{file} data => #{data} offset => #{offset} data => #{data}" }

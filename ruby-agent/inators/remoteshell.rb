@@ -1,7 +1,7 @@
 require 'open3'
 
-module Bu
-	class RemoteShellInator
+module Inator
+	class RemoteShell
 		attr_reader :remote_shells
 		def initialize
 			@remote_shells = []
