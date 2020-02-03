@@ -14,8 +14,12 @@ client.subscribe(["/bu/#", 2])
 client.add_topic_callback("/bu/#") do |p|
 	#cursor = TTY::Cursor
 	#print cursor.move_to(7, 7)
-	payload = MessagePack.unpack p.payload
-	puts payload
+	begin
+		payload = MessagePack.unpack p.payload
+		puts payload
+	rescue
+		puts payload
+	end
 end
 
 client.add_topic_callback("/bu/shinobi/+") do |p|

