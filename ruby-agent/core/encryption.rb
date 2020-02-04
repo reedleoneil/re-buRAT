@@ -8,11 +8,13 @@ class Encryption
   end
 
   def Encryption.encrypt(data)
-    @@bu_key.public_encrypt(data)
+    #@@bu_key.public_encrypt(data)
+    data
   end
 
   def Encryption.decrypt(data)
-    @@key.private_decrypt(data)
+    #@@key.private_decrypt(data)
+    data
   end
 
   def Encryption.public_key

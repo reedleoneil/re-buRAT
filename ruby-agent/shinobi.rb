@@ -11,13 +11,9 @@ require_relative 'core/serialization'
 require_relative 'inators/remoteshell'
 require_relative 'inators/filerw'
 
-#test
-key = OpenSSL::PKey::RSA.new(2408)
-pub_key = key.public_key.to_pem
-#test
 
 Encryption.config({
-	:bu_key => pub_key
+	:bu_key => ''
 })
 
 Serialization.config({
