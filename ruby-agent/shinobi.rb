@@ -13,7 +13,7 @@ require_relative 'inators/filerw'
 
 
 Encryption.config({
-	:bu_key => ''
+	:bu_key => 2048
 })
 
 Serialization.config({
