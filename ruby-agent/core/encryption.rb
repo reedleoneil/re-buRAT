@@ -3,7 +3,7 @@ require 'openssl'
 module Encryption
   class RSA
     def RSA.config(config)
-      @@key = OpenSSL::PKey::RSA.new(config[:key_size])
+      @@key = OpenSSL::PKey::RSA.new(config[:key_size] || config[:encoded_key])
     end
 
     def RSA.public_key
