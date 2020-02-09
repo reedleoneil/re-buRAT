@@ -21,19 +21,26 @@ module Encryption
 
   class AES
     def AES.config(config)
-      @@cipher = OpenSSL::Cipher::AES.new(config[:key_lenght], config[:mode])
-      @@cipher.key = config[:key]
-      @@cipher.iv = config[:iv]
+      @@key_lenght = config[:key_lenght]
+      @@mode = config[:mode]
+      @@key = config[:key]
+      @@iv = config[:iv]
     end
 
     def AES.encrypt(data)
-      @@cipher.encrypt
-      @@cipher.update(data) + @@cipher.final
+      cipher = OpenSSL::Cipher::AES.new(@@key_lenght, @@mode)
+      cipher.key = @@key
+      cipher.iv = @@iv
+      cipher.encrypt
+      cipher.update(data) + cipher.final
     end
 
     def AES.decrypt(data)
-      @@cipher.decrypt
-      @@cipher.update(data) + @@cipher.final
+      decipher = OpenSSL::Cipher::AES.new(@@key_lenght, @@mode)
+      decipher.key = @@key
+      decipher.iv = @@iv
+      decipher.decrypt
+      decipher.update(data) + decipher.final
     end
   end
 
