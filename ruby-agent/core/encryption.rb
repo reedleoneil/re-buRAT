@@ -20,20 +20,30 @@ module Encryption
   end
 
   class AES
-      def AES.config(config)
-        @@cipher = OpenSSL::Cipher::AES.new(config[:key_lenght], config[:mode])
-        @@cipher.key = config[:key]
-        @@cipher.iv = config[:iv]
-      end
+    def AES.config(config)
+      @@cipher = OpenSSL::Cipher::AES.new(config[:key_lenght], config[:mode])
+      @@cipher.key = config[:key]
+      @@cipher.iv = config[:iv]
+    end
 
-      def AES.encrypt(data)
-        @@cipher.encrypt
-        @@cipher.update(data) + @@cipher.final
-      end
+    def AES.encrypt(data)
+      @@cipher.encrypt
+      @@cipher.update(data) + @@cipher.final
+    end
 
-      def AES.decrypt(data)
-        @@cipher.decrypt
-        @@cipher.update(data) + @@cipher.final
-      end
+    def AES.decrypt(data)
+      @@cipher.decrypt
+      @@cipher.update(data) + @@cipher.final
+    end
+  end
+
+  class Digest
+    def Digest.config(config)
+      @@digest = OpenSSL::Digest.new(config[:digest])
+    end
+
+    def Digest.digest(data)
+      @@digest.hexdigest(data)
+    end
   end
 end

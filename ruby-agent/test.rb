@@ -17,6 +17,10 @@ aes = {
   :iv => cipher.random_iv,
 }
 
+Encryption::Digest.config({
+	:digest => "sha256"
+})
+
 Encryption::AES.config({
   :key_lenght => 128,
   :mode => :CTR,
@@ -38,9 +42,19 @@ mqtt_settings = {
 }
 
 mqtt_topics = {
-	:rsa									=> "/bu/shinobi/+/rsa",
+  :rsa									=> "/bu/shinobi/+/rsa",
 	:shinobi							=> "/bu/shinobi/+"
 }
+
+mqtt_topics.each do |key, value|
+	levels = value.split('/')
+	levels.each_with_index do |level, index|
+		if level != '+' && level != '#' then
+			levels[index] = Encryption::Digest.digest(level)
+		end
+	end
+	mqtt_topics[key] = levels.join('/')
+end
 
 mqtt_client = PahoMqtt::Client.new(mqtt_settings)
 
@@ -50,20 +64,19 @@ mqtt_client.on_connack do
 end
 
 mqtt_client.add_topic_callback(mqtt_topics[:rsa]) do |packet|
-  begin
-    topic = packet.topic
+  topic = packet.topic.split('/')
+  topic[4] = Encryption::Digest.digest('aes')
+  topic = topic.join('/')
+  puts topic
 
-    Encryption::RSA.config({
-    	:key_size => packet.payload
-    })
+  Encryption::RSA.config({
+    :encoded_key => packet.payload
+  })
 
-    packet = Serialization.serialize(aes)
-    packet = Encryption::RSA.encrypt(packet)
+  packet = Serialization.serialize(aes)
+  packet = Encryption::RSA.encrypt(packet)
 
-  	mqtt_client.publish(topic, packet, false, 1)
-  rescue
-
-  end
+  mqtt_client.publish(topic, packet, false, 1)
 end
 
 mqtt_client.add_topic_callback(mqtt_topics[:shinobi]) do |packet|

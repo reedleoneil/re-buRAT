@@ -15,6 +15,10 @@ Encryption::RSA.config({
 	:key_size => 2048
 })
 
+Encryption::Digest.config({
+	:digest => "sha256"
+})
+
 Serialization.config({
 
 })
@@ -47,6 +51,16 @@ mqtt_topics = {
 	:filerw_error					=> "/bu/shinobi/#{shinobi[:id]}/inators/filerw/events/error"
 }
 
+mqtt_topics.each do |key, value|
+	levels = value.split('/')
+	levels.each_with_index do |level, index|
+		if level != '+' && level != '#' then
+			levels[index] = Encryption::Digest.digest(level)
+		end
+	end
+	mqtt_topics[key] = levels.join('/')
+end
+
 mqtt_settings = {
 	:host => 'localhost',
 	:port => 1883,
@@ -66,29 +80,28 @@ filerw_inator = Inator::FileReadWrite.new
 
 mqtt_client.on_connack do
 	mqtt_client.publish(mqtt_topics[:rsa], Encryption::RSA.public_key, false, 1)
-	mqtt_client.subscribe([mqtt_topics[:rsa], 2])
+	mqtt_client.subscribe([mqtt_topics[:aes], 2])
 end
 
-mqtt_client.add_topic_callback(mqtt_topics[:rsa]) do |packet|
-	if packet.payload != Encryption::RSA.public_key then
-		packet = Encryption::RSA.decrypt(packet.payload)
-		packet = Serialization.deserialize(packet)
-		Encryption::AES.config({
-			:key_lenght => 128,
-			:mode => :CTR,
-			:key => packet.key,
-			:iv => packet.iv
-		})
+mqtt_client.add_topic_callback(mqtt_topics[:aes]) do |packet|
+	packet = Encryption::RSA.decrypt(packet.payload)
+	packet = Serialization.deserialize(packet)
 
-		shinobi[:status] = :online
+	Encryption::AES.config({
+		:key_lenght => 128,
+		:mode => :CTR,
+		:key => packet.key,
+		:iv => packet.iv
+	})
 
-		Thread.new do
-			loop do
-				packet = Serialization.serialize(shinobi)
-				packet = Encryption::AES.encrypt(packet)
-				mqtt_client.publish(mqtt_topics[:shinobi], packet, false, 1)
-				sleep mqtt_client.keep_alive
-			end
+	shinobi[:status] = :online
+
+	Thread.new do
+		loop do
+			packet = Serialization.serialize(shinobi)
+			packet = Encryption::AES.encrypt(packet)
+			mqtt_client.publish(mqtt_topics[:shinobi], packet, false, 1)
+			sleep mqtt_client.keep_alive
 		end
 	end
 end
