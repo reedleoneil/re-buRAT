@@ -240,7 +240,7 @@ end
 
 mqtt_client.connect(mqtt_client.host, mqtt_client.port, mqtt_client.keep_alive, mqtt_client.persistent, mqtt_client.blocking)
 mqtt_topics.each do |key, value|
-	if value.include? 'cmds' then
+	if value.include? Encryption::Digest.digest('cmds') then
 		mqtt_client.subscribe([value, 2])
 		sleep 0.1
 	end
