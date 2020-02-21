@@ -1,9 +1,6 @@
 require 'paho-mqtt'
-require 'msgpacker'
-require 'ostruct'
 require 'securerandom'
 require 'os'
-require 'json'
 
 require_relative 'core/encryption'
 require_relative 'core/serialization'
