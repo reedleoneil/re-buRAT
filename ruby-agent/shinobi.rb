@@ -96,16 +96,17 @@ mqtt_client.add_topic_callback(mqtt_topics[:public_key]) do |packet|
 		:encoded_key => packet.payload
 	})
 
-	shinobi[:status] = :online
-
-	Thread.new do
-		loop do
-			packet = Serialization.serialize(shinobi)
-			packet = Encryption::RSA.encrypt(packet)
-			mqtt_client.publish(mqtt_topics[:shinobi], packet, false, 1)
-			sleep mqtt_client.keep_alive
-		end
-	end
+  if shinobi[:status] == :offline then
+    shinobi[:status] = :online
+    Thread.new do
+  		loop do
+  			packet = Serialization.serialize(shinobi)
+  			packet = Encryption::RSA.encrypt(packet)
+  			mqtt_client.publish(mqtt_topics[:shinobi], packet, false, 1)
+  			sleep mqtt_client.keep_alive
+  		end
+  	end
+  end
 end
 
 mqtt_client.add_topic_callback(mqtt_topics[:remoteshell_open]) do |packet|
@@ -140,8 +141,8 @@ end
 
 remoteshell_inator.on :open do |pid, shell|
 	packet = {
-		pid: pid,
-		shell: shell
+		:pid => pid,
+		:shell => shell
 	}
 	packet = Serialization.serialize(packet)
 	packet = Encryption::AES.encrypt(packet)
@@ -151,7 +152,7 @@ remoteshell_inator.on :open do |pid, shell|
 		remote_shells << { :pid => remote_shell[2].pid, :shell => remote_shell[4] }
 	end
 	packet = {
-		remote_shells: remote_shells
+		:remote_shells => remote_shells
 	}
 	packet = Serialization.serialize(packet)
 	packet = Encryption::AES.encrypt(packet)
@@ -160,7 +161,7 @@ end
 
 remoteshell_inator.on :close do |pid|
 	packet = {
-		pid: pid
+		:pid => pid
 	}
 	packet = Serialization.serialize(packet)
 	packet = Encryption::AES.encrypt(packet)
@@ -170,7 +171,7 @@ remoteshell_inator.on :close do |pid|
 		remote_shells << { :pid => remote_shell[2].pid, :shell => remote_shell[4] }
 	end
 	packet = {
-		remote_shells: remote_shells
+		:remote_shells => remote_shells
 	}
 	packet = Serialization.serialize(packet)
 	packet = Encryption::AES.encrypt(packet)
@@ -179,8 +180,8 @@ end
 
 remoteshell_inator.on :read do |pid, data|
 	packet = {
-		pid: pid,
-		data: data
+		:pid => pid,
+		:data => data
 	}
 	packet = Serialization.serialize(packet)
 	packet = Encryption::AES.encrypt(packet)
@@ -189,8 +190,8 @@ end
 
 remoteshell_inator.on :write do |pid, data|
 	packet = {
-		pid: pid,
-		data: data
+		:pid => pid,
+		:data => data
 	}
 	packet = Serialization.serialize(packet)
 	packet = Encryption::AES.encrypt(packet)
@@ -199,8 +200,8 @@ end
 
 remoteshell_inator.on :error do |pid, error|
 	packet = {
-		pid: pid,
-		error: error
+		:pid => pid,
+		:error => error
 	}
 	packet = Serialization.serialize(packet)
 	packet = Encryption::AES.encrypt(packet)
@@ -209,10 +210,10 @@ end
 
 filerw_inator.on :read do |file, length, offset, data|
 	packet = {
-		file: file,
-		length: length,
-		offset: offset,
-		data: data
+		:file => file,
+		:length => length,
+		:offset => offset,
+		:data => data
 	}
 	packet = Serialization.serialize(packet)
 	packet = Encryption::AES.encrypt(packet)
@@ -221,9 +222,9 @@ end
 
 filerw_inator.on :write do |file, data, offset, length|
 	packet = {
-		file: file,
-		offset: offset,
-		length: length
+		:file => file,
+		:offset => offset,
+		:length => length
 	}
 	packet = Serialization.serialize(packet)
 	packet = Encryption::AES.encrypt(packet)
@@ -232,8 +233,8 @@ end
 
 filerw_inator.on :error do |file, error|
 	packet = {
-		file: file,
-		error: error
+		:file => file,
+		:error => error
 	}
 	packet = Serialization.serialize(packet)
 	packet = Encryption::AES.encrypt(packet)
