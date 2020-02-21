@@ -83,8 +83,6 @@ mqtt_client.add_topic_callback(mqtt_topics[:shinobi]) do |packet|
 	  	:iv => packet.aes["iv"]
 	  })
 
-	  puts packet
-
 		payload = { :shell =>  'bash' }
 		topic = mqtt_topics[:remoteshell_open].dup
 		topic['+'] = agent
@@ -108,9 +106,6 @@ mqtt_client.add_topic_callback(mqtt_topics[:remoteshell_onopen]) do |packet|
 	payload = { :pid =>  packet.pid, :data => 'ping google.com' }
 	topic = mqtt_topics[:remoteshell_write].dup
 	topic['+'] = agent
-
-	puts topic
-	puts payload
 
 	payload = Serialization.serialize(payload)
 	payload = Encryption::AES.encrypt(payload)
