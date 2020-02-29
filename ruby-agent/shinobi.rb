@@ -1,6 +1,7 @@
 require 'paho-mqtt'
 require 'securerandom'
 require 'os'
+require 'base64'
 
 require_relative 'core/encryption'
 require_relative 'core/serialization'
@@ -73,11 +74,11 @@ mqtt_settings = {
 	:persistent => true,
 	:blocking => true,
 	:reconnect_limit => 3,
-	:reconnect_delay => 60
-	#:will_topic => mqtt_topics[:shinobi],
-	#:will_payload => shinobi,
-	#:will_qos => 2,
-	#:will_retain => false
+	:reconnect_delay => 60,
+	:will_topic => mqtt_topics[:shinobi],
+	:will_payload => Base64.encode64(Encryption::AES.encrypt(Serialization.serialize(shinobi))),
+	:will_qos => 2,
+	:will_retain => false
 }
 
 mqtt_client = PahoMqtt::Client.new(mqtt_settings)

