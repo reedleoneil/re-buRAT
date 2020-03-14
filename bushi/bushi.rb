@@ -4,6 +4,7 @@ require 'open-uri'
 require 'paho-mqtt'
 
 require_relative 'bushido/remoteshell/buremoteshell'
+require_relative 'bushido/filerw/bufilerw'
 
 class Bushi
   attr_reader :id, :host, :os, :ip
@@ -16,7 +17,8 @@ class Bushi
     @status = :offline
     @bushido = {
       :mqtt         => PahoMqtt::Client.new,
-      :remoteshell  => Bushido::BuRemoteShell.new
+      :remoteshell  => Bushido::BuRemoteShell.new,
+      :filerw       => Bushido::BuFileReadWrite.new
     }
   end
 end

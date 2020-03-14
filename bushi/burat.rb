@@ -25,6 +25,7 @@ end
 # 	bushi.bushido[:remoteshell].open(packet.id, packet.shell)
 # end
 
+# remoteshell
 bushi.bushido[:remoteshell].on :open do |id|
   puts "open #{id}"
 	packet = {
@@ -50,11 +51,50 @@ bushi.bushido[:remoteshell].on :error do |id, error|
   puts "error #{id} #{error}"
 end
 
+# filerw
+bushi.bushido[:filerw].on :open do |id|
+  puts "open #{id}"
+	packet = {
+		:id => id
+	}
+	bushi.bushido[:mqtt].publish(mqtt_topics[:shinobi], packet, true, 1)
+end
+
+bushi.bushido[:filerw].on :close do |id|
+	puts "close #{id}"
+  bushi.bushido[:mqtt].publish(mqtt_topics[:shinobi], nil, true, 1)
+end
+
+bushi.bushido[:filerw].on :read do |id, data|
+  puts "read #{id} #{data}"
+end
+
+bushi.bushido[:filerw].on :write do |id, lenght|
+  puts "write #{id} #{lenght}"
+end
+
+bushi.bushido[:filerw].on :error do |id, error|
+  puts "error #{id} #{error}"
+end
+
 bushi.bushido[:mqtt].connect(bushi.bushido[:mqtt].host, bushi.bushido[:mqtt].port, bushi.bushido[:mqtt].keep_alive, bushi.bushido[:mqtt].persistent, bushi.bushido[:mqtt].blocking)
 
 #bushi.bushido[:remoteshell].open('531', 'bash')
 #bushi.bushido[:remoteshell].write('531','whoami')
 #bushi.bushido[:remoteshell].close('531')
+
+bushi.bushido[:filerw].open(456, 'test', :write, 100)
+bushi.bushido[:filerw].write(456, 'hi')
+bushi.bushido[:filerw].write(456, 'hellow')
+puts bushi.bushido[:filerw].files[0].bytesio
+
+bushi.bushido[:filerw].open(123, 'test', :read, 100)
+bushi.bushido[:filerw].read(123, 4)
+bushi.bushido[:filerw].read(123, 4)
+puts bushi.bushido[:filerw].files[0].bytesio
+
+bushi.bushido[:filerw].close(456)
+bushi.bushido[:filerw].close(123)
 
 loop do
 	bushi.bushido[:mqtt].loop_read
