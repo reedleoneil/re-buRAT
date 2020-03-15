@@ -96,6 +96,12 @@ puts bushi.bushido[:filerw].files[0].bytesio
 bushi.bushido[:filerw].close(456)
 bushi.bushido[:filerw].close(123)
 
+test = { :test => 'hi' }
+s = bushi.bushido[:serialization].serialize(test)
+puts s
+d = bushi.bushido[:serialization].deserialize(s)
+puts d
+
 loop do
 	bushi.bushido[:mqtt].loop_read
 	bushi.bushido[:mqtt].loop_write
