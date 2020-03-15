@@ -102,7 +102,6 @@ puts s
 d = bushi.bushido[:serialization].deserialize(s)
 puts d
 
-<<<<<<< HEAD
 bushi.bushido[:digest].config({
 	:digest => "md5"
 })
@@ -129,8 +128,6 @@ bushi.bushido[:rsa].config({
 
 puts bushi.bushido[:rsa].encrypt(s)
 
-=======
->>>>>>> 78cd2d2dda941bbe0cd0385c823d9ab551f61517
 loop do
 	bushi.bushido[:mqtt].loop_read
 	bushi.bushido[:mqtt].loop_write
