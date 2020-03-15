@@ -3,6 +3,8 @@ require 'os'
 require 'open-uri'
 require 'paho-mqtt'
 
+require_relative 'bushido/core/serialization'
+require_relative 'bushido/core/encryption'
 require_relative 'bushido/remoteshell/buremoteshell'
 require_relative 'bushido/filerw/bufilerw'
 
@@ -16,9 +18,13 @@ class Bushi
     @ip = open('http://whatismyip.akamai.com').read
     @status = :offline
     @bushido = {
-      :mqtt         => PahoMqtt::Client.new,
-      :remoteshell  => Bushido::BuRemoteShell.new,
-      :filerw       => Bushido::BuFileReadWrite.new
+      :mqtt           => PahoMqtt::Client.new,
+      :serialization  => Bushido::Serialization.new,
+      :rsa            => Bushido::RSA.new,
+      :aes            => Bushido::AES.new,
+      :digest         => Bushido::Digest.new,
+      :remoteshell    => Bushido::BuRemoteShell.new,
+      :filerw         => Bushido::BuFileReadWrite.new
     }
   end
 end

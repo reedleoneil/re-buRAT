@@ -96,6 +96,38 @@ puts bushi.bushido[:filerw].files[0].bytesio
 bushi.bushido[:filerw].close(456)
 bushi.bushido[:filerw].close(123)
 
+test = { :test => 'hi' }
+s = bushi.bushido[:serialization].serialize(test)
+puts s
+d = bushi.bushido[:serialization].deserialize(s)
+puts d
+
+bushi.bushido[:digest].config({
+	:digest => "md5"
+})
+puts bushi.bushido[:digest].digest(s)
+
+cipher = OpenSSL::Cipher::AES.new(128, :CTR)
+aes = {
+  :key => cipher.random_key,
+  :iv => cipher.random_iv,
+}
+
+bushi.bushido[:aes].config({
+	:key_lenght => 128,
+	:mode => :CTR,
+	:key => aes[:key],
+	:iv => aes[:iv]
+})
+
+puts bushi.bushido[:aes].encrypt(s)
+
+bushi.bushido[:rsa].config({
+  :key_size => 2048
+})
+
+puts bushi.bushido[:rsa].encrypt(s)
+
 loop do
 	bushi.bushido[:mqtt].loop_read
 	bushi.bushido[:mqtt].loop_write
