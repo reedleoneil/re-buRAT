@@ -4,14 +4,8 @@ require_relative 'bushido/remoteshell/buremoteshell'
 require_relative 'bushido/filerw/bufilerw'
 
 class Bushi
-  attr_reader :id, :host, :os, :ip
-  attr_accessor :status, :bushido
-  def initialize(params)
-    @id = params[:id]
-    @host = params[:host]
-    @os = params[:os]
-    @ip = params[:ip]
-    @status = params[:status]
+  attr_accessor :id, :host, :os, :ip, :status, :bushido
+  def initialize()
     @bushido = {
       :mqtt           => PahoMqtt::Client.new,
       :serialization  => Bushido::Serialization.new,

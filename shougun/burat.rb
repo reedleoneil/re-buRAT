@@ -48,27 +48,25 @@ shougun.bushido[:mqtt].add_topic_callback(mqtt_topics[:bushi]) do |packet|
     packet = shougun.bushido[:rsa].decrypt(packet)
     packet = shougun.bushido[:serialization].deserialize(packet)
 
-    if packet['status'] == 'online' then
-      bushi = Bushi.new({
-        :id => packet['id'],
-        :host => packet['host'],
-        :os => packet['os'],
-        :ip => packet['ip'],
-        :status => packet['status']
-      })
+		bushi = shougun.bushi.find { |bushi| bushi.id == packet['id'] }
 
-      bushi.bushido[:aes].config({
-        :key_lenght => 128,
-        :mode => :CTR,
-        :key => packet['aes']['key'],
-        :iv => packet['aes']['iv']
-      })
+		if !bushi then
+			bushi = Bushi.new
+			shougun.bushi.push(bushi)
+		end
 
-      shougun.bushi.push(bushi)
-    elsif packet['status'] == 'offline' then
-      bushi = shougun.bushi.find { |bushi| bushi.id == packet['id'] }
-      bushi.status = :offline
-    end
+		bushi.id = packet['id']
+		bushi.host = packet['host']
+		bushi.os = packet['os']
+		bushi.ip = packet['ip']
+		bushi.status = packet['status']
+
+		bushi.bushido[:aes].config({
+			:key_lenght => 128,
+			:mode => :CTR,
+			:key => packet['aes']['key'],
+			:iv => packet['aes']['iv']
+		})
   rescue StandardError => error
     puts error.backtrace
   end
@@ -87,7 +85,6 @@ Thread.new {
 while command = $stdin.gets.chomp
 	case command
 	when 'pub key'
-		`gnome-terminal`
 		packet = shougun.bushido[:rsa].public_key
 	  shougun.bushido[:mqtt].publish(mqtt_topics[:public_key], packet, true, 2)
 	when 'list'
