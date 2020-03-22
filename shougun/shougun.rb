@@ -6,10 +6,8 @@ require_relative 'internals/encryption'
 
 class Shougun
   attr_accessor :bushi, :internals, :bushido
-
   def initialize()
     @bushi = []
-    @internals
     @internals = {
       :mqtt           => PahoMqtt::Client.new,
       :serialization  => Internals::Serialization.new,

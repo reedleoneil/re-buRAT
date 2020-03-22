@@ -30,4 +30,16 @@ class Bushi
       :filerw         => Bushido::BuFileReadWrite.new
     }
   end
+
+  def seen(data)
+  	data = @internals[:serialization].serialize(data)
+  	data = @internals[:aes].encrypt(data)
+  	return data
+  end
+
+  def deseen(data)
+  	data = @internals[:aes].decrypt(data)
+  	data = @internals[:serialization].deserialize(data)
+  	return data
+  end
 end

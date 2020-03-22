@@ -4,25 +4,21 @@ require_relative 'shougun'
 mqtt_topics = {
 	:public_key						=> "/bu/public_key",
 	:bushi								=> "/bu/bushi/+",
-	:remoteshell					=> "/bu/bushi/+/bushido/remoteshell",
-	:remoteshell_open			=> "/bu/bushi/+/bushido/remoteshell/cmds/open",
-	:remoteshell_close		=> "/bu/bushi/+/bushido/remoteshell/cmds/close",
-	:remoteshell_write		=> "/bu/bushi/+/bushido/remoteshell/cmds/write",
-	:remoteshell_onopen		=> "/bu/bushi/+/bushido/remoteshell/events/open",
-	:remoteshell_onclose	=> "/bu/bushi/+/bushido/remoteshell/events/close",
-	:remoteshell_onread		=> "/bu/bushi/+/bushido/remoteshell/events/read",
-	:remoteshell_onwrite	=> "/bu/bushi/+/bushido/remoteshell/events/write",
-	:remoteshell_onerror	=> "/bu/bushi/+/bushido/remoteshell/events/error",
-	:filerw								=> "/bu/bushi/+/bushido/filerw",
-	:filerw_open					=> "/bu/bushi/+/bushido/filerw/cmds/open",
-	:filerw_close					=> "/bu/bushi/+/bushido/filerw/cmds/close",
-	:filerw_read					=> "/bu/bushi/+/bushido/filerw/cmds/read",
-	:filerw_write					=> "/bu/bushi/+/bushido/filerw/cmds/write",
-	:filerw_onopen				=> "/bu/bushi/+/bushido/filerw/events/open",
-	:filerw_onclose				=> "/bu/bushi/+/bushido/filerw/events/close",
-	:filerw_onread				=> "/bu/bushi/+/bushido/filerw/events/read",
-	:filerw_onwrite				=> "/bu/bushi/+/bushido/filerw/events/write",
-	:filerw_error					=> "/bu/bushi/+/bushido/filerw/events/error"
+	:remoteshell					=> "/bu/bushi/+/bushido/remoteshell/+/",
+	:remoteshell_open			=> "/bu/bushi/+/bushido/remoteshell/+/cmds/open",
+	:remoteshell_close		=> "/bu/bushi/+/bushido/remoteshell/+/cmds/close",
+	:remoteshell_write		=> "/bu/bushi/+/bushido/remoteshell/+/cmds/write",
+	:remoteshell_onread		=> "/bu/bushi/+/bushido/remoteshell/+/events/read",
+	:remoteshell_onwrite	=> "/bu/bushi/+/bushido/remoteshell/+/events/write",
+	:remoteshell_onerror	=> "/bu/bushi/+/bushido/remoteshell/+/events/error",
+	:filerw								=> "/bu/bushi/+/bushido/filerw/+/",
+	:filerw_open					=> "/bu/bushi/+/bushido/filerw/+/cmds/open",
+	:filerw_close					=> "/bu/bushi/+/bushido/filerw/+/cmds/close",
+	:filerw_read					=> "/bu/bushi/+/bushido/filerw/+/cmds/read",
+	:filerw_write					=> "/bu/bushi/+/bushido/filerw/+/cmds/write",
+	:filerw_onread				=> "/bu/bushi/+/bushido/filerw/+/events/read",
+	:filerw_onwrite				=> "/bu/bushi/+/bushido/filerw/+/events/write",
+	:filerw_error					=> "/bu/bushi/+/bushido/filerw/+/events/error"
 }
 
 shougun = Shougun.new
@@ -89,7 +85,7 @@ while command = $stdin.gets.chomp
 	  shougun.internals[:mqtt].publish(mqtt_topics[:public_key], packet, true, 2)
 	when 'list'
 		shougun.bushi.each do |bushi|
-			puts "#{bushi.id} #{bushi.status}"
+			puts "#{bushi.id} #{bushi.host} #{bushi.os} #{bushi.ip} #{bushi.status}"
 		end
 	when 'rs open'
 		topic = mqtt_topics[:remoteshell_open].dup
@@ -99,6 +95,19 @@ while command = $stdin.gets.chomp
 			:id => $stdin.gets.chomp,
 			:shell => $stdin.gets.chomp
 		}
+		topic['+'] = packet[:id]
+		bushi = shougun.bushi.find { |bushi| bushi.id == id }
+		packet = shougun.internals[:serialization].serialize(packet)
+		packet = bushi.internals[:aes].encrypt(packet)
+		shougun.internals[:mqtt].publish(topic, packet, false, 2)
+	when 'rs close'
+		topic = mqtt_topics[:remoteshell_close].dup
+		id = $stdin.gets.chomp
+		topic['+'] = id
+		packet = {
+			:id => $stdin.gets.chomp,
+		}
+		topic['+'] = packet[:id]
 		bushi = shougun.bushi.find { |bushi| bushi.id == id }
 		packet = shougun.internals[:serialization].serialize(packet)
 		packet = bushi.internals[:aes].encrypt(packet)
@@ -111,6 +120,7 @@ while command = $stdin.gets.chomp
 			:id => $stdin.gets.chomp,
 			:data => $stdin.gets.chomp
 		}
+		topic['+'] = packet[:id]
 		bushi = shougun.bushi.find { |bushi| bushi.id == id }
 		packet = shougun.internals[:serialization].serialize(packet)
 		packet = bushi.internals[:aes].encrypt(packet)

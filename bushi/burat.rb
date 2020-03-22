@@ -19,25 +19,21 @@ bushi = Bushi.new
 mqtt_topics = {
 	:public_key						=> "/bu/public_key",
 	:bushi								=> "/bu/bushi/#{bushi.id}",
-	:remoteshell					=> "/bu/bushi/#{bushi.id}/bushido/remoteshell",
-	:remoteshell_open			=> "/bu/bushi/#{bushi.id}/bushido/remoteshell/cmds/open",
-	:remoteshell_close		=> "/bu/bushi/#{bushi.id}/bushido/remoteshell/cmds/close",
-	:remoteshell_write		=> "/bu/bushi/#{bushi.id}/bushido/remoteshell/cmds/write",
-	:remoteshell_onopen		=> "/bu/bushi/#{bushi.id}/bushido/remoteshell/events/open",
-	:remoteshell_onclose	=> "/bu/bushi/#{bushi.id}/bushido/remoteshell/events/close",
-	:remoteshell_onread		=> "/bu/bushi/#{bushi.id}/bushido/remoteshell/events/read",
-	:remoteshell_onwrite	=> "/bu/bushi/#{bushi.id}/bushido/remoteshell/events/write",
-	:remoteshell_onerror	=> "/bu/bushi/#{bushi.id}/bushido/remoteshell/events/error",
-	:filerw								=> "/bu/bushi/#{bushi.id}/bushido/filerw",
-	:filerw_open					=> "/bu/bushi/#{bushi.id}/bushido/filerw/cmds/open",
-	:filerw_close					=> "/bu/bushi/#{bushi.id}/bushido/filerw/cmds/close",
-	:filerw_read					=> "/bu/bushi/#{bushi.id}/bushido/filerw/cmds/read",
-	:filerw_write					=> "/bu/bushi/#{bushi.id}/bushido/filerw/cmds/write",
-	:filerw_onopen				=> "/bu/bushi/#{bushi.id}/bushido/filerw/events/open",
-	:filerw_onclose				=> "/bu/bushi/#{bushi.id}/bushido/filerw/events/close",
-	:filerw_onread				=> "/bu/bushi/#{bushi.id}/bushido/filerw/events/read",
-	:filerw_onwrite				=> "/bu/bushi/#{bushi.id}/bushido/filerw/events/write",
-	:filerw_error					=> "/bu/bushi/#{bushi.id}/bushido/filerw/events/error"
+	:remoteshell					=> "/bu/bushi/#{bushi.id}/bushido/remoteshell/+",
+	:remoteshell_open			=> "/bu/bushi/#{bushi.id}/bushido/remoteshell/+/cmds/open",
+	:remoteshell_close		=> "/bu/bushi/#{bushi.id}/bushido/remoteshell/+/cmds/close",
+	:remoteshell_write		=> "/bu/bushi/#{bushi.id}/bushido/remoteshell/+/cmds/write",
+	:remoteshell_onread		=> "/bu/bushi/#{bushi.id}/bushido/remoteshell/+/events/read",
+	:remoteshell_onwrite	=> "/bu/bushi/#{bushi.id}/bushido/remoteshell/+/events/write",
+	:remoteshell_onerror	=> "/bu/bushi/#{bushi.id}/bushido/remoteshell/+/events/error",
+	:filerw								=> "/bu/bushi/#{bushi.id}/bushido/filerw/+",
+	:filerw_open					=> "/bu/bushi/#{bushi.id}/bushido/filerw/+/cmds/open",
+	:filerw_close					=> "/bu/bushi/#{bushi.id}/bushido/filerw/+/cmds/close",
+	:filerw_read					=> "/bu/bushi/#{bushi.id}/bushido/filerw/+/cmds/read",
+	:filerw_write					=> "/bu/bushi/#{bushi.id}/bushido/filerw/+/cmds/write",
+	:filerw_onread				=> "/bu/bushi/#{bushi.id}/bushido/filerw/+/events/read",
+	:filerw_onwrite				=> "/bu/bushi/#{bushi.id}/bushido/filerw/+/events/write",
+	:filerw_error					=> "/bu/bushi/#{bushi.id}/bushido/filerw/+/events/error"
 }
 
 cipher = OpenSSL::Cipher::AES.new(128, :CTR)
@@ -75,7 +71,7 @@ bushi.internals[:mqtt].reconnect_delay = 60
 bushi.internals[:mqtt].will_topic = mqtt_topics[:bushi]
 bushi.internals[:mqtt].will_payload = Base64.encode64(bushi.internals[:rsa].encrypt(bushi.internals[:serialization].serialize(profile)))
 bushi.internals[:mqtt].will_qos = 2
-bushi.internals[:mqtt].will_retain = false
+bushi.internals[:mqtt].will_retain = true
 
 #bushi.bushido[:remoteshell].open('531', 'bash')
 #bushi.bushido[:remoteshell].write('531','whoami')
@@ -125,34 +121,72 @@ end
 
 # remoteshell commands
 bushi.internals[:mqtt].add_topic_callback(mqtt_topics[:remoteshell_open]) do |packet|
-	packet = bushi.internals[:aes].decrypt(packet.payload)
-	packet = bushi.internals[:serialization].deserialize(packet)
+	packet = bushi.deseen(packet.payload)
 	bushi.bushido[:remoteshell].open(packet['id'], packet['shell'])
 end
 
 bushi.internals[:mqtt].add_topic_callback(mqtt_topics[:remoteshell_close]) do |packet|
-	packet = bushi.internals[:aes].decrypt(packet.payload)
-	packet = bushi.internals[:serialization].deserialize(packet)
+	packet = bushi.deseen(packet.payload)
 	bushi.bushido[:remoteshell].close(packet['id'])
 end
 
 bushi.internals[:mqtt].add_topic_callback(mqtt_topics[:remoteshell_write]) do |packet|
-	packet = bushi.internals[:aes].decrypt(packet.payload)
-	packet = bushi.internals[:serialization].deserialize(packet)
+	packet = bushi.deseen(packet.payload)
 	bushi.bushido[:remoteshell].write(packet['id'], packet['data'])
 end
 
-# remoteshell
+# filerw commands
+bushi.internals[:mqtt].add_topic_callback(mqtt_topics[:filerw_open]) do |packet|
+	packet = bushi.deseen(packet.payload)
+	bushi.bushido[:filerw].open(packet['id'], packet['path'], packet['mode'], packet['size'])
+end
+
+bushi.internals[:mqtt].add_topic_callback(mqtt_topics[:filerw_close]) do |packet|
+	packet = bushi.deseen(packet.payload)
+	bushi.bushido[:filerw].close(packet['id'])
+end
+
+bushi.internals[:mqtt].add_topic_callback(mqtt_topics[:filerw_read]) do |packet|
+	packet = bushi.deseen(packet.payload)
+	bushi.bushido[:filerw].read(packet['id'], packet['length'])
+end
+
+bushi.internals[:mqtt].add_topic_callback(mqtt_topics[:filerw_write]) do |packet|
+	packet = bushi.deseen(packet.payload)
+	bushi.bushido[:filerw].write(packet['id'], packet['data'])
+end
+
+# remoteshell events
 bushi.bushido[:remoteshell].on :open do |id|
   puts "remoteshell.open #{id}"
+	remoteshell = bushi.bushido[:remoteshell].remoteshells.find { |remoteshell| remoteshell.id == id }
+	packet = {
+		:id			=> id,
+		:shell	=> remoteshell.shell
+	}
+	packet = bushi.seen(packet)
+	topic = mqtt_topics[:remoteshell].dup
+	topic['+'] = id
+	bushi.internals[:mqtt].publish(topic, packet, true, 2)
 end
 
 bushi.bushido[:remoteshell].on :close do |id|
 	puts "remoteshell.close #{id}"
+	topic = mqtt_topics[:remoteshell].dup
+	topic['+'] = id
+	bushi.internals[:mqtt].publish(topic, nil, true, 2)
 end
 
 bushi.bushido[:remoteshell].on :read do |id, data|
   puts "remoteshell.read #{id} #{data}"
+	packet = {
+		:id			=> id,
+		:data		=> data
+	}
+	packet = bushi.seen(packet)
+	topic = mqtt_topics[:remoteshell_onread].dup
+	topic['+'] = id
+	bushi.internals[:mqtt].publish(topic, packet, false, 2)
 end
 
 bushi.bushido[:remoteshell].on :write do |id, data|
@@ -161,9 +195,17 @@ end
 
 bushi.bushido[:remoteshell].on :error do |id, error|
   puts "remoteshell.error #{id} #{error}"
+	packet = {
+		:id			=> id,
+		:error	=> error
+	}
+	packet = bushi.seen(packet)
+	topic = mqtt_topics[:remoteshell_onerror].dup
+	topic['+'] = id
+	bushi.internals[:mqtt].publish(topic, packet, false, 2)
 end
 
-# filerw
+# filerw events
 bushi.bushido[:filerw].on :open do |id|
   puts "filerw.open #{id}"
 end
