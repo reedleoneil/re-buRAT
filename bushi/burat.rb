@@ -33,7 +33,7 @@ mqtt_topics = {
 	:filerw_write					=> "/bu/bushi/#{bushi.id}/bushido/filerw/+/cmds/write",
 	:filerw_onread				=> "/bu/bushi/#{bushi.id}/bushido/filerw/+/events/read",
 	:filerw_onwrite				=> "/bu/bushi/#{bushi.id}/bushido/filerw/+/events/write",
-	:filerw_error					=> "/bu/bushi/#{bushi.id}/bushido/filerw/+/events/error"
+	:filerw_onerror					=> "/bu/bushi/#{bushi.id}/bushido/filerw/+/events/error"
 }
 
 cipher = OpenSSL::Cipher::AES.new(128, :CTR)
@@ -208,14 +208,49 @@ end
 # filerw events
 bushi.bushido[:filerw].on :open do |id|
   puts "filerw.open #{id}"
+	file = bushi.bushido[:filerw].files.find { |file| file.id == id }
+	packet = {
+		:id			=> id,
+		:path		=> file.path,
+		:mode		=> file.mode,
+		:size		=> file.size
+	}
+	packet = bushi.seen(packet)
+	topic = mqtt_topics[:filerw].dup
+	topic['+'] = id
+	bushi.internals[:mqtt].publish(topic, packet, true, 2)
 end
 
 bushi.bushido[:filerw].on :close do |id|
 	puts "filerw.close #{id}"
+	topic = mqtt_topics[:filerw].dup
+	topic['+'] = id
+	bushi.internals[:mqtt].publish(topic, nil, true, 2)
 end
 
 bushi.bushido[:filerw].on :read do |id, data|
 	puts "filerw.read #{id} #{data}"
+	packet = {
+		:id			=> id,
+		:data		=> data
+	}
+	packet = bushi.seen(packet)
+	topic = mqtt_topics[:filerw_onread].dup
+	topic['+'] = id
+	bushi.internals[:mqtt].publish(topic, packet, false, 2)
+
+	file = bushi.bushido[:filerw].files.find { |file| file.id == id }
+	packet = {
+		:id			=> id,
+		:path		=> file.path,
+		:mode		=> file.mode,
+		:size		=> file.size,
+		:bytesio	=> file.bytesio
+	}
+	packet = bushi.seen(packet)
+	topic = mqtt_topics[:filerw].dup
+	topic['+'] = id
+	bushi.internals[:mqtt].publish(topic, packet, true, 2)
 end
 
 bushi.bushido[:filerw].on :write do |id, lenght|
@@ -224,6 +259,14 @@ end
 
 bushi.bushido[:filerw].on :error do |id, error|
   puts "filerw.error #{id} #{error}"
+	packet = {
+		:id			=> id,
+		:error	=> error
+	}
+	packet = bushi.seen(packet)
+	topic = mqtt_topics[:filerw_onerror].dup
+	topic['+'] = id
+	bushi.internals[:mqtt].publish(topic, packet, false, 2)
 end
 
 bushi.internals[:mqtt].connect(bushi.internals[:mqtt].host, bushi.internals[:mqtt].port, bushi.internals[:mqtt].keep_alive, bushi.internals[:mqtt].persistent, bushi.internals[:mqtt].blocking)

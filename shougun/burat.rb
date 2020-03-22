@@ -125,5 +125,58 @@ while command = $stdin.gets.chomp
 		packet = shougun.internals[:serialization].serialize(packet)
 		packet = bushi.internals[:aes].encrypt(packet)
 		shougun.internals[:mqtt].publish(topic, packet, false, 2)
+	when 'frw open'
+		topic = mqtt_topics[:filerw_open].dup
+		id = $stdin.gets.chomp
+		topic['+'] = id
+		packet = {
+			:id			=> $stdin.gets.chomp,
+			:path		=> $stdin.gets.chomp,
+			:mode		=> $stdin.gets.chomp,
+			:size		=> $stdin.gets.chomp.to_i,
+		}
+		topic['+'] = packet[:id]
+		bushi = shougun.bushi.find { |bushi| bushi.id == id }
+		packet = shougun.internals[:serialization].serialize(packet)
+		packet = bushi.internals[:aes].encrypt(packet)
+		shougun.internals[:mqtt].publish(topic, packet, false, 2)
+	when 'frw close'
+		topic = mqtt_topics[:filerw_close].dup
+		id = $stdin.gets.chomp
+		topic['+'] = id
+		packet = {
+			:id => $stdin.gets.chomp,
+		}
+		topic['+'] = packet[:id]
+		bushi = shougun.bushi.find { |bushi| bushi.id == id }
+		packet = shougun.internals[:serialization].serialize(packet)
+		packet = bushi.internals[:aes].encrypt(packet)
+		shougun.internals[:mqtt].publish(topic, packet, false, 2)
+	when 'frw write'
+		topic = mqtt_topics[:filerw_write].dup
+		id = $stdin.gets.chomp
+		topic['+'] = id
+		packet = {
+			:id => $stdin.gets.chomp,
+			:data => $stdin.gets.chomp
+		}
+		topic['+'] = packet[:id]
+		bushi = shougun.bushi.find { |bushi| bushi.id == id }
+		packet = shougun.internals[:serialization].serialize(packet)
+		packet = bushi.internals[:aes].encrypt(packet)
+		shougun.internals[:mqtt].publish(topic, packet, false, 2)
+	when 'frw read'
+		topic = mqtt_topics[:filerw_read].dup
+		id = $stdin.gets.chomp
+		topic['+'] = id
+		packet = {
+			:id => $stdin.gets.chomp,
+			:length => $stdin.gets.chomp.to_i
+		}
+		topic['+'] = packet[:id]
+		bushi = shougun.bushi.find { |bushi| bushi.id == id }
+		packet = shougun.internals[:serialization].serialize(packet)
+		packet = bushi.internals[:aes].encrypt(packet)
+		shougun.internals[:mqtt].publish(topic, packet, false, 2)
 	end
 end
