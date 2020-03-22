@@ -1,17 +1,19 @@
-require_relative 'bushido/core/serialization'
-require_relative 'bushido/core/encryption'
-require_relative 'bushido/remoteshell/buremoteshell'
+require_relative 'internals/encryption'
+require_relative 'internals/serialization'
 require_relative 'bushido/filerw/bufilerw'
+require_relative 'bushido/remoteshell/buremoteshell'
 
 class Bushi
-  attr_accessor :id, :host, :os, :ip, :status, :bushido
+  attr_accessor :id, :host, :os, :ip, :status, :internals, :bushido
   def initialize()
-    @bushido = {
+    @internals = {
       :mqtt           => PahoMqtt::Client.new,
-      :serialization  => Bushido::Serialization.new,
-      :rsa            => Bushido::RSA.new,
-      :aes            => Bushido::AES.new,
-      :digest         => Bushido::Digest.new,
+      :serialization  => Internals::Serialization.new,
+      :rsa            => Internals::RSA.new,
+      :aes            => Internals::AES.new,
+      :digest         => Internals::Digest.new
+    }
+    @bushido = {
       :remoteshell    => Bushido::BuRemoteShell.new,
       :filerw         => Bushido::BuFileReadWrite.new
     }

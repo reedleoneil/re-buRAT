@@ -46,14 +46,14 @@ aes = {
   :iv => cipher.random_iv,
 }
 
-bushi.bushido[:aes].config({
+bushi.internals[:aes].config({
 	:key_lenght => 128,
 	:mode => :CTR,
 	:key => aes[:key],
 	:iv => aes[:iv]
 })
 
-bushi.bushido[:rsa].config({
+bushi.internals[:rsa].config({
 	:encoded_key => key
 })
 
@@ -66,16 +66,16 @@ profile = {
 	:aes => aes
 }
 
-bushi.bushido[:mqtt].host = 'localhost'
-bushi.bushido[:mqtt].port = 1883
-bushi.bushido[:mqtt].persistent = true
-bushi.bushido[:mqtt].blocking = true
-bushi.bushido[:mqtt].reconnect_limit = 3
-bushi.bushido[:mqtt].reconnect_delay = 60
-bushi.bushido[:mqtt].will_topic = mqtt_topics[:bushi]
-bushi.bushido[:mqtt].will_payload = Base64.encode64(bushi.bushido[:rsa].encrypt(bushi.bushido[:serialization].serialize(profile)))
-bushi.bushido[:mqtt].will_qos = 2
-bushi.bushido[:mqtt].will_retain = false
+bushi.internals[:mqtt].host = 'localhost'
+bushi.internals[:mqtt].port = 1883
+bushi.internals[:mqtt].persistent = true
+bushi.internals[:mqtt].blocking = true
+bushi.internals[:mqtt].reconnect_limit = 3
+bushi.internals[:mqtt].reconnect_delay = 60
+bushi.internals[:mqtt].will_topic = mqtt_topics[:bushi]
+bushi.internals[:mqtt].will_payload = Base64.encode64(bushi.internals[:rsa].encrypt(bushi.internals[:serialization].serialize(profile)))
+bushi.internals[:mqtt].will_qos = 2
+bushi.internals[:mqtt].will_retain = false
 
 #bushi.bushido[:remoteshell].open('531', 'bash')
 #bushi.bushido[:remoteshell].write('531','whoami')
@@ -95,50 +95,50 @@ bushi.bushido[:mqtt].will_retain = false
 # bushi.bushido[:filerw].close(123)
 
 # test = { :test => 'hi' }
-# s = bushi.bushido[:serialization].serialize(test)
+# s = bushi.internals[:serialization].serialize(test)
 # puts s
-# d = bushi.bushido[:serialization].deserialize(s)
+# d = bushi.internals[:serialization].deserialize(s)
 # puts d
 #
-# bushi.bushido[:digest].config({
+# bushi.internals[:digest].config({
 # 	:digest => "md5"
 # })
-# puts bushi.bushido[:digest].digest(s)
+# puts bushi.internals[:digest].digest(s)
 #
 #
-# puts bushi.bushido[:aes].encrypt(s)
+# puts bushi.internals[:aes].encrypt(s)
 #
-# bushi.bushido[:rsa].config({
+# bushi.internals[:rsa].config({
 #   :key_size => 2048
 # })
 #
-# puts bushi.bushido[:rsa].encrypt(s)
+# puts bushi.internals[:rsa].encrypt(s)
 
-bushi.bushido[:mqtt].on_connack do
+bushi.internals[:mqtt].on_connack do
 	profile[:status] = :online
 	packet = profile
-	packet = bushi.bushido[:serialization].serialize(packet)
-	packet = bushi.bushido[:rsa].encrypt(packet)
+	packet = bushi.internals[:serialization].serialize(packet)
+	packet = bushi.internals[:rsa].encrypt(packet)
 	packet = Base64.encode64(packet)
-	bushi.bushido[:mqtt].publish(mqtt_topics[:bushi], packet, false, 2)
+	bushi.internals[:mqtt].publish(mqtt_topics[:bushi], packet, false, 2)
 end
 
 # remoteshell commands
-bushi.bushido[:mqtt].add_topic_callback(mqtt_topics[:remoteshell_open]) do |packet|
-	packet = bushi.bushido[:aes].decrypt(packet.payload)
-	packet = bushi.bushido[:serialization].deserialize(packet)
+bushi.internals[:mqtt].add_topic_callback(mqtt_topics[:remoteshell_open]) do |packet|
+	packet = bushi.internals[:aes].decrypt(packet.payload)
+	packet = bushi.internals[:serialization].deserialize(packet)
 	bushi.bushido[:remoteshell].open(packet['id'], packet['shell'])
 end
 
-bushi.bushido[:mqtt].add_topic_callback(mqtt_topics[:remoteshell_close]) do |packet|
-	packet = bushi.bushido[:aes].decrypt(packet.payload)
-	packet = bushi.bushido[:serialization].deserialize(packet)
+bushi.internals[:mqtt].add_topic_callback(mqtt_topics[:remoteshell_close]) do |packet|
+	packet = bushi.internals[:aes].decrypt(packet.payload)
+	packet = bushi.internals[:serialization].deserialize(packet)
 	bushi.bushido[:remoteshell].close(packet['id'])
 end
 
-bushi.bushido[:mqtt].add_topic_callback(mqtt_topics[:remoteshell_write]) do |packet|
-	packet = bushi.bushido[:aes].decrypt(packet.payload)
-	packet = bushi.bushido[:serialization].deserialize(packet)
+bushi.internals[:mqtt].add_topic_callback(mqtt_topics[:remoteshell_write]) do |packet|
+	packet = bushi.internals[:aes].decrypt(packet.payload)
+	packet = bushi.internals[:serialization].deserialize(packet)
 	bushi.bushido[:remoteshell].write(packet['id'], packet['data'])
 end
 
@@ -184,10 +184,10 @@ bushi.bushido[:filerw].on :error do |id, error|
   puts "filerw.error #{id} #{error}"
 end
 
-bushi.bushido[:mqtt].connect(bushi.bushido[:mqtt].host, bushi.bushido[:mqtt].port, bushi.bushido[:mqtt].keep_alive, bushi.bushido[:mqtt].persistent, bushi.bushido[:mqtt].blocking)
-bushi.bushido[:mqtt].subscribe(["#", 2])
+bushi.internals[:mqtt].connect(bushi.internals[:mqtt].host, bushi.internals[:mqtt].port, bushi.internals[:mqtt].keep_alive, bushi.internals[:mqtt].persistent, bushi.internals[:mqtt].blocking)
+bushi.internals[:mqtt].subscribe(["#", 2])
 
 loop do
-	bushi.bushido[:mqtt].loop_read
-	bushi.bushido[:mqtt].loop_write
+	bushi.internals[:mqtt].loop_read
+	bushi.internals[:mqtt].loop_write
 end

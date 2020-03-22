@@ -1,20 +1,21 @@
 require 'paho-mqtt'
 
 require_relative 'bushi'
-require_relative 'bushido/core/serialization'
-require_relative 'bushido/core/encryption'
+require_relative 'internals/serialization'
+require_relative 'internals/encryption'
 
 class Shougun
-  attr_accessor :bushi, :bushido
+  attr_accessor :bushi, :internals, :bushido
 
   def initialize()
     @bushi = []
-    @bushido = {
+    @internals
+    @internals = {
       :mqtt           => PahoMqtt::Client.new,
-      :serialization  => Bushido::Serialization.new,
-      :rsa            => Bushido::RSA.new,
-      :aes            => Bushido::AES.new,
-      :digest         => Bushido::Digest.new
+      :serialization  => Internals::Serialization.new,
+      :rsa            => Internals::RSA.new,
+      :aes            => Internals::AES.new,
+      :digest         => Internals::Digest.new
     }
   end
 end

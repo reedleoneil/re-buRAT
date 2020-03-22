@@ -1,6 +1,6 @@
 require 'msgpacker'
 
-module Bushido
+module Internals
   class Serialization
     def serialize(data)
       MessagePack.pack(data)

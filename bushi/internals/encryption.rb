@@ -1,6 +1,6 @@
 require 'openssl'
 
-module Bushido
+module Internals
   class RSA
     def config(config)
       @key = OpenSSL::PKey::RSA.new(config[:key_size] || config[:encoded_key])
