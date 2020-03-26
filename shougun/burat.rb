@@ -2,23 +2,23 @@ require 'base64'
 require_relative 'shougun'
 
 mqtt_topics = {
-	:public_key						=> "/bu/public_key",
-	:bushi								=> "/bu/bushi/+",
-	:remoteshell					=> "/bu/bushi/+/bushido/remoteshell/+/",
-	:remoteshell_open			=> "/bu/bushi/+/bushido/remoteshell/+/cmds/open",
-	:remoteshell_close		=> "/bu/bushi/+/bushido/remoteshell/+/cmds/close",
-	:remoteshell_write		=> "/bu/bushi/+/bushido/remoteshell/+/cmds/write",
-	:remoteshell_onread		=> "/bu/bushi/+/bushido/remoteshell/+/events/read",
-	:remoteshell_onwrite	=> "/bu/bushi/+/bushido/remoteshell/+/events/write",
-	:remoteshell_onerror	=> "/bu/bushi/+/bushido/remoteshell/+/events/error",
-	:filerw								=> "/bu/bushi/+/bushido/filerw/+/",
-	:filerw_open					=> "/bu/bushi/+/bushido/filerw/+/cmds/open",
-	:filerw_close					=> "/bu/bushi/+/bushido/filerw/+/cmds/close",
-	:filerw_read					=> "/bu/bushi/+/bushido/filerw/+/cmds/read",
-	:filerw_write					=> "/bu/bushi/+/bushido/filerw/+/cmds/write",
-	:filerw_onread				=> "/bu/bushi/+/bushido/filerw/+/events/read",
-	:filerw_onwrite				=> "/bu/bushi/+/bushido/filerw/+/events/write",
-	:filerw_error					=> "/bu/bushi/+/bushido/filerw/+/events/error"
+	:public_key							=> "/bu/public_key",
+	:bushi									=> "/bu/bushi/+",
+	:remoteshell						=> "/bu/bushi/+/bushido/remoteshell/+/",
+	:remoteshell_cmd_open		=> "/bu/bushi/+/bushido/remoteshell/+/cmd/open",
+	:remoteshell_cmd_close	=> "/bu/bushi/+/bushido/remoteshell/+/cmd/close",
+	:remoteshell_cmd_write	=> "/bu/bushi/+/bushido/remoteshell/+/cmd/write",
+	:remoteshell_evt_read		=> "/bu/bushi/+/bushido/remoteshell/+/evt/read",
+	:remoteshell_evt_write	=> "/bu/bushi/+/bushido/remoteshell/+/evt/write",
+	:remoteshell_evt_error	=> "/bu/bushi/+/bushido/remoteshell/+/evt/error",
+	:filerw									=> "/bu/bushi/+/bushido/filerw/+/",
+	:filerw_cmd_open				=> "/bu/bushi/+/bushido/filerw/+/cmd/open",
+	:filerw_cmd_close				=> "/bu/bushi/+/bushido/filerw/+/cmd/close",
+	:filerw_cmd_read				=> "/bu/bushi/+/bushido/filerw/+/cmd/read",
+	:filerw_cmd_write				=> "/bu/bushi/+/bushido/filerw/+/cmd/write",
+	:filerw_evt_read				=> "/bu/bushi/+/bushido/filerw/+/evt/read",
+	:filerw_evt_write				=> "/bu/bushi/+/bushido/filerw/+/evt/write",
+	:filerw_evt_error				=> "/bu/bushi/+/bushido/filerw/+/evt/error"
 }
 
 shougun = Shougun.new
@@ -88,7 +88,7 @@ while command = $stdin.gets.chomp
 			puts "#{bushi.id} #{bushi.host} #{bushi.os} #{bushi.ip} #{bushi.status}"
 		end
 	when 'rs open'
-		topic = mqtt_topics[:remoteshell_open].dup
+		topic = mqtt_topics[:remoteshell_cmd_open].dup
 		id = $stdin.gets.chomp
 		topic['+'] = id
 		packet = {
@@ -101,7 +101,7 @@ while command = $stdin.gets.chomp
 		packet = bushi.internals[:aes].encrypt(packet)
 		shougun.internals[:mqtt].publish(topic, packet, false, 2)
 	when 'rs close'
-		topic = mqtt_topics[:remoteshell_close].dup
+		topic = mqtt_topics[:remoteshell_cmd_close].dup
 		id = $stdin.gets.chomp
 		topic['+'] = id
 		packet = {
@@ -113,7 +113,7 @@ while command = $stdin.gets.chomp
 		packet = bushi.internals[:aes].encrypt(packet)
 		shougun.internals[:mqtt].publish(topic, packet, false, 2)
 	when 'rs write'
-		topic = mqtt_topics[:remoteshell_write].dup
+		topic = mqtt_topics[:remoteshell_cmd_write].dup
 		id = $stdin.gets.chomp
 		topic['+'] = id
 		packet = {
@@ -126,7 +126,7 @@ while command = $stdin.gets.chomp
 		packet = bushi.internals[:aes].encrypt(packet)
 		shougun.internals[:mqtt].publish(topic, packet, false, 2)
 	when 'frw open'
-		topic = mqtt_topics[:filerw_open].dup
+		topic = mqtt_topics[:filerw_cmd_open].dup
 		id = $stdin.gets.chomp
 		topic['+'] = id
 		packet = {
@@ -141,7 +141,7 @@ while command = $stdin.gets.chomp
 		packet = bushi.internals[:aes].encrypt(packet)
 		shougun.internals[:mqtt].publish(topic, packet, false, 2)
 	when 'frw close'
-		topic = mqtt_topics[:filerw_close].dup
+		topic = mqtt_topics[:filerw_cmd_close].dup
 		id = $stdin.gets.chomp
 		topic['+'] = id
 		packet = {
@@ -153,7 +153,7 @@ while command = $stdin.gets.chomp
 		packet = bushi.internals[:aes].encrypt(packet)
 		shougun.internals[:mqtt].publish(topic, packet, false, 2)
 	when 'frw write'
-		topic = mqtt_topics[:filerw_write].dup
+		topic = mqtt_topics[:filerw_cmd_write].dup
 		id = $stdin.gets.chomp
 		topic['+'] = id
 		packet = {
@@ -166,7 +166,7 @@ while command = $stdin.gets.chomp
 		packet = bushi.internals[:aes].encrypt(packet)
 		shougun.internals[:mqtt].publish(topic, packet, false, 2)
 	when 'frw read'
-		topic = mqtt_topics[:filerw_read].dup
+		topic = mqtt_topics[:filerw_cmd_read].dup
 		id = $stdin.gets.chomp
 		topic['+'] = id
 		packet = {
