@@ -78,7 +78,7 @@ bushi.internals[:mqtt].on_connack do
 	packet = bushi.internals[:serialization].serialize(packet)
 	packet = bushi.internals[:rsa].encrypt(packet)
 	packet = Base64.encode64(packet)
-	bushi.internals[:mqtt].publish(mqtt_topics[:bushi], packet, false, 2)
+	bushi.internals[:mqtt].publish(mqtt_topics[:bushi], packet, true, 2)
 end
 
 # remoteshell commands
