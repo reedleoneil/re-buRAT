@@ -24,7 +24,7 @@ mqtt_topics = {
 shougun = Shougun.new
 
 shougun.internals[:rsa].config({
-  :key_size => 2048
+  :encoded_key => File.read('bu.key')
 })
 
 shougun.internals[:mqtt].host = 'localhost'
