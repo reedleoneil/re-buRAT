@@ -153,6 +153,14 @@ end
 
 bushi.bushido[:remoteshell].on :write do |id, data|
   puts "remoteshell.write #{id} #{data}"
+	packet = {
+		:id			=> id,
+		:data		=> data
+	}
+	packet = bushi.seen(packet)
+	topic = mqtt_topics[:remoteshell_evt_write].dup
+	topic['+'] = id
+	bushi.internals[:mqtt].publish(topic, packet, false, 2)
 end
 
 bushi.bushido[:remoteshell].on :error do |id, error|
@@ -217,6 +225,27 @@ end
 
 bushi.bushido[:filerw].on :write do |id, lenght|
   puts "filerw.read #{id} #{lenght}"
+	packet = {
+		:id			=> id,
+		:lenght		=> lenght
+	}
+	packet = bushi.seen(packet)
+	topic = mqtt_topics[:filerw_evt_write].dup
+	topic['+'] = id
+	bushi.internals[:mqtt].publish(topic, packet, false, 2)
+
+	file = bushi.bushido[:filerw].files.find { |file| file.id == id }
+	packet = {
+		:id			=> id,
+		:path		=> file.path,
+		:mode		=> file.mode,
+		:size		=> file.size,
+		:bytesio	=> file.bytesio
+	}
+	packet = bushi.seen(packet)
+	topic = mqtt_topics[:filerw].dup
+	topic['+'] = id
+	bushi.internals[:mqtt].publish(topic, packet, true, 2)
 end
 
 bushi.bushido[:filerw].on :error do |id, error|

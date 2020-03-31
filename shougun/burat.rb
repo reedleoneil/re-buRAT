@@ -63,6 +63,12 @@ shougun.internals[:mqtt].add_topic_callback(mqtt_topics[:bushi]) do |packet|
 			:key => packet['aes']['key'],
 			:iv => packet['aes']['iv']
 		})
+
+		data = []
+		shougun.bushi.each do |bushi|
+			data.push [bushi.id, bushi.host, bushi.os, bushi.ip, bushi.status]
+		end
+		shougun.internals[:ui].render_bushi_table(data)
   rescue StandardError => error
     puts error.backtrace
   end
