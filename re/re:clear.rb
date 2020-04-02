@@ -1,4 +1,15 @@
+require 'optparse'
 require 'paho-mqtt'
+
+params = {
+	:topic => '/bu/#'
+}
+
+OptionParser.new do |opts|
+  opts.program_name = "re:clear"
+  opts.version = "0.0.1"
+	opts.on('-t', '--topic',  '=TOPIC',   'topic to be cleared')
+end.parse!(into: params)
 
 re = {
 	:internals => {
@@ -26,7 +37,7 @@ re[:internals][:mqtt].connect(
   re[:internals][:mqtt].blocking
 )
 
-re[:internals][:mqtt].subscribe(['/bu/#', 2])
+re[:internals][:mqtt].subscribe([params[:topic], 2])
 
 loop do
 	re[:internals][:mqtt].loop_read
