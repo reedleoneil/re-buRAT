@@ -20,7 +20,6 @@ module Internals
   end
 
   class AES
-    attr_reader :key, :iv
     def config(config)
       @key_lenght = config[:key_lenght]
       @mode = config[:mode]
