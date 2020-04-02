@@ -52,8 +52,6 @@ re[:internals][:mqtt].add_topic_callback(re[:topics][:bushi]) do |message|
 
     re[:bushi][packet[:id]] = packet
 
-    puts re[:bushi]
-
 		data = []
 		re[:bushi].each_value do |value|
 			data.push(value.fetch_values(:id, :host, :os, :ip, :status))
