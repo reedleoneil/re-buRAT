@@ -38,7 +38,7 @@ mqtt_topics = {
 
 cipher = OpenSSL::Cipher::AES.new(128, :CTR)
 burat.internals[:aes].config({
-	:key_lenght => 128,
+	:key_length => 128,
 	:mode => :CTR,
 	:key => cipher.random_key,
 	:iv => cipher.random_iv
@@ -217,11 +217,11 @@ burat.bushido[:filerw].on :read do |id, data|
 	burat.internals[:mqtt].publish(topic, packet, true, 2)
 end
 
-burat.bushido[:filerw].on :write do |id, lenght|
-  puts "filerw.read #{id} #{lenght}"
+burat.bushido[:filerw].on :write do |id, length|
+  puts "filerw.read #{id} #{length}"
 	packet = {
 		:id			=> id,
-		:lenght		=> lenght
+		:length		=> length
 	}
 	packet = burat.seen(packet)
 	topic = mqtt_topics[:filerw_evt_write].dup

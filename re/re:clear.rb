@@ -8,7 +8,7 @@ params = {
 OptionParser.new do |opts|
   opts.program_name = "re:clear"
   opts.version = "0.0.1"
-	opts.on('-t', '--topic',  '=TOPIC',   'topic to be cleared')
+	opts.on('-t', '--topic', '=TOPIC', 'topic to be cleared')
 end.parse!(into: params)
 
 re = {

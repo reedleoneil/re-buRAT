@@ -81,9 +81,10 @@ re[:internals][:mqtt].add_topic_callback(re[:topics][:bushi]) do |message|
   packet = packet.transform_keys(&:to_sym)
   pp packet
 
-  if packet[:status] == 'online' then
+  case packet[:status]
+  when 'online'
     re[:internals][:aes].config({
-      :key_lenght => 128,
+      :key_length => 128,
       :mode => :CTR,
       :key => packet[:aes]['key'],
       :iv => packet[:aes]['iv']
@@ -93,7 +94,7 @@ re[:internals][:mqtt].add_topic_callback(re[:topics][:bushi]) do |message|
     packet = re[:internals][:serialization].serialize(packet)
     packet = re[:internals][:aes].encrypt(packet)
     re[:internals][:mqtt].publish(re[:topics][:filerw_cmd_open], packet, false, 2)
-  else
+  when 'offline'
     exit
   end
 end
@@ -140,7 +141,7 @@ re[:internals][:mqtt].add_topic_callback(re[:topics][:filerw_evt_write]) do |mes
   packet = re[:internals][:aes].decrypt(message.payload)
   packet = re[:internals][:serialization].deserialize(packet)
   packet = packet.transform_keys(&:to_sym)
-  puts packet[:data]
+  puts packet[:length]
 end
 
 re[:internals][:mqtt].add_topic_callback(re[:topics][:filerw_evt_error]) do |message|

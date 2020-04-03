@@ -5,13 +5,12 @@ require 'pp'
 require 'securerandom'
 require 'tty-reader'
 
-require_relative 'internals/serialization'
 require_relative 'internals/encryption'
+require_relative 'internals/serialization'
 require_relative 'internals/ui'
 
 params = {
-  :id => SecureRandom.hex(2),
-  :shell => 'bash'
+  :id => SecureRandom.hex(2)
 }
 
 OptionParser.new do |opts|
@@ -19,7 +18,7 @@ OptionParser.new do |opts|
   opts.version = "0.0.1"
   opts.on('-b', '--bushi',  '=BUSHI',   'target bushi')
   opts.on('-i', '--id',     '=ID',      'id of remote shell')
-  opts.on('-s', '--shell',  '=ID',      'shell to spawn')
+  opts.on('-s', '--shell',  '=SHELL',      'shell to spawn')
 end.parse!(into: params)
 
 re = {
@@ -70,9 +69,10 @@ re[:internals][:mqtt].add_topic_callback(re[:topics][:bushi]) do |message|
   packet = packet.transform_keys(&:to_sym)
   pp packet
 
-  if packet[:status] == 'online' then
+  case packet[:status]
+  when 'online'
     re[:internals][:aes].config({
-      :key_lenght => 128,
+      :key_length => 128,
       :mode => :CTR,
       :key => packet[:aes]['key'],
       :iv => packet[:aes]['iv']
@@ -82,7 +82,7 @@ re[:internals][:mqtt].add_topic_callback(re[:topics][:bushi]) do |message|
     packet = re[:internals][:serialization].serialize(packet)
     packet = re[:internals][:aes].encrypt(packet)
     re[:internals][:mqtt].publish(re[:topics][:remoteshell_cmd_open], packet, false, 2)
-  else
+  when 'offline'
     exit
   end
 end
@@ -94,8 +94,8 @@ re[:internals][:mqtt].add_topic_callback(re[:topics][:remoteshell]) do |message|
   else
     packet = re[:internals][:aes].decrypt(message.payload)
     packet = re[:internals][:serialization].deserialize(packet)
-    packet = packet.transform_keys(&:to_sym)
-    pp packet
+    remoteshell = packet.transform_keys(&:to_sym)
+    pp remoteshell
   end
 end
 

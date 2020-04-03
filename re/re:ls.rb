@@ -1,9 +1,9 @@
-require 'optparse'
 require 'base64'
+require 'optparse'
 require 'paho-mqtt'
 
-require_relative 'internals/serialization'
 require_relative 'internals/encryption'
+require_relative 'internals/serialization'
 require_relative 'internals/ui'
 
 params = {}

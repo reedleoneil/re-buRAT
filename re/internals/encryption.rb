@@ -21,14 +21,14 @@ module Internals
 
   class AES
     def config(config)
-      @key_lenght = config[:key_lenght]
+      @key_length = config[:key_length]
       @mode = config[:mode]
       @key = config[:key]
       @iv = config[:iv]
     end
 
     def encrypt(data)
-      cipher = OpenSSL::Cipher::AES.new(@key_lenght, @mode)
+      cipher = OpenSSL::Cipher::AES.new(@key_length, @mode)
       cipher.key = @key
       cipher.iv = @iv
       cipher.encrypt
@@ -36,7 +36,7 @@ module Internals
     end
 
     def decrypt(data)
-      decipher = OpenSSL::Cipher::AES.new(@key_lenght, @mode)
+      decipher = OpenSSL::Cipher::AES.new(@key_length, @mode)
       decipher.key = @key
       decipher.iv = @iv
       decipher.decrypt
