@@ -5,23 +5,25 @@ require 'pp'
 require 'securerandom'
 require 'tty-reader'
 
-require_relative 'internals/serialization'
 require_relative 'internals/encryption'
+require_relative 'internals/serialization'
 require_relative 'internals/ui'
 
 params = {
-  :id => SecureRandom.hex(2)
+  :id => SecureRandom.hex(2),
+  :rate => 1024
 }
 
 OptionParser.new do |opts|
   opts.program_name = "re:filerw"
   opts.version = "0.0.1"
-  opts.on('-b', '--bushi',        '=ID',    'target bushi')
-  opts.on('-i', '--id',           '=ID',    'id of remote shell')
-  opts.on('-m', '--mode',         '=MODE',  'file mode read | write')
-  opts.on('-s', '--source',       '=PATH',  'remote file path to read from')
-  opts.on('-d', '--destination',  '=PATH',  'local file path to read to')
-  opts.on('-z', '--size',         '=SIZE',  'file size to read or write')
+  opts.on('-b', '--bushi',        '=ID',              'target bushi')
+  opts.on('-i', '--id',           '=ID',              'id of remote shell')
+  opts.on('-m', '--mode',         '=MODE',            'file mode read | write')
+  opts.on('-s', '--source',       '=PATH',            'remote file path to read from')
+  opts.on('-d', '--destination',  '=PATH',            'local file path to read to')
+  opts.on('-z', '--size',         '=SIZE', Integer,   'file size to read or write')
+  opts.on('-r', '--rate',         '=BITS', Integer,   'transfer rate default: 1024')
 end.parse!(into: params)
 
 re = {
@@ -110,11 +112,11 @@ re[:internals][:mqtt].add_topic_callback(re[:topics][:filerw]) do |message|
     when 'read'
       topic = re[:topics][:filerw_cmd_read]
       packet = re[:packets][:read]
-      packet[:length] = 1024
+      packet[:length] = params[:rate]
     when 'write'
       topic = re[:topics][:filerw_cmd_write]
       packet = re[:packets][:write]
-      packet[:data] = File.binread(params[:source], 1024, file[:bytesio].to_i)
+      packet[:data] = File.binread(params[:source], params[:rate], file[:bytesio].to_i)
     end
 
     if file[:size].to_i > file[:bytesio].to_i then
