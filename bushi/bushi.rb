@@ -173,10 +173,11 @@ burat.bushido[:filerw].on :open do |id|
   puts "filerw.open #{id}"
 	file = burat.bushido[:filerw].files.find { |file| file.id == id }
 	packet = {
-		:id			=> id,
-		:path		=> file.path,
-		:mode		=> file.mode,
-		:size		=> file.size
+		:id				=> id,
+		:path			=> file.path,
+		:mode			=> file.mode,
+		:size			=> file.size,
+		:bytesio	=> file.bytesio
 	}
 	packet = burat.seen(packet)
 	topic = mqtt_topics[:filerw].dup
