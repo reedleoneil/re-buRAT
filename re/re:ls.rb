@@ -15,7 +15,8 @@ end.parse!(into: params)
 
 re = {
   :topics => {
-    :bushi => "/bu/bushi/+"
+    :nil    => "/bu/nil",
+    :bushi  => "/bu/bushi/+"
   },
 	:internals => {
 		:mqtt           => PahoMqtt::Client.new,
@@ -40,7 +41,12 @@ re[:internals][:mqtt].reconnect_limit = 3
 re[:internals][:mqtt].reconnect_delay = 60
 
 re[:internals][:mqtt].on_connack do
-
+  Thread.new {
+    loop do
+      re[:internals][:mqtt].publish(re[:topics][:nil], 'nil', false, 2)
+      sleep re[:internals][:mqtt].keep_alive
+    end
+  }
 end
 
 re[:internals][:mqtt].add_topic_callback(re[:topics][:bushi]) do |message|

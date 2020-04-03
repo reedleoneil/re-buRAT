@@ -17,6 +17,7 @@ end
 burat = BuRat.new
 
 mqtt_topics = {
+	:nil										=> "/bu/nil",
 	:bushi									=> "/bu/bushi/#{burat.id}",
 	:remoteshell						=> "/bu/bushi/#{burat.id}/bushido/remoteshell/+",
 	:remoteshell_cmd_open		=> "/bu/bushi/#{burat.id}/bushido/remoteshell/+/cmd/open",
@@ -65,6 +66,12 @@ burat.internals[:mqtt].on_connack do
 	packet = burat.internals[:rsa].encrypt(packet)
 	packet = Base64.encode64(packet)
 	burat.internals[:mqtt].publish(mqtt_topics[:bushi], packet, true, 2)
+	Thread.new {
+		loop do
+			burat.internals[:mqtt].publish(mqtt_topics[:nil], 'nil', false, 2)
+			sleep burat.internals[:mqtt].keep_alive
+		end
+	}
 end
 
 # remoteshell commands
