@@ -59,7 +59,7 @@ re[:internals][:mqtt].reconnect_limit = 3
 re[:internals][:mqtt].reconnect_delay = 60
 
 re[:internals][:mqtt].on_connack do
-
+  re[:internals][:ui].render_banner('re:MOTESHELL')
 end
 
 re[:internals][:mqtt].add_topic_callback(re[:topics][:bushi]) do |message|

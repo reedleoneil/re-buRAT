@@ -56,7 +56,8 @@ re = {
 		:aes            => Internals::AES.new,
 		:digest         => Internals::Digest.new,
 		:ui             => Internals::UI.new
-	}
+	},
+  :progressbar => nil
 }
 
 re[:internals][:rsa].config({
@@ -71,7 +72,8 @@ re[:internals][:mqtt].reconnect_limit = 3
 re[:internals][:mqtt].reconnect_delay = 60
 
 re[:internals][:mqtt].on_connack do
-
+  re[:internals][:ui].render_banner('re:FILERW')
+  re[:progressbar] = re[:internals][:ui].progressbar(params[:size])
 end
 
 re[:internals][:mqtt].add_topic_callback(re[:topics][:bushi]) do |message|
@@ -107,7 +109,9 @@ re[:internals][:mqtt].add_topic_callback(re[:topics][:filerw]) do |message|
     packet = re[:internals][:aes].decrypt(message.payload)
     packet = re[:internals][:serialization].deserialize(packet)
     file = packet.transform_keys(&:to_sym)
-    pp file
+    #pp file
+
+    re[:progressbar].advance(params[:rate])
 
     case file[:mode]
     when 'read'
@@ -132,7 +136,7 @@ re[:internals][:mqtt].add_topic_callback(re[:topics][:filerw_evt_read]) do |mess
   packet = re[:internals][:aes].decrypt(message.payload)
   packet = re[:internals][:serialization].deserialize(packet)
   packet = packet.transform_keys(&:to_sym)
-  puts packet[:data]
+  #puts packet[:data]
   offset = File.exist?(params[:destination]) ? File.size(params[:destination]) : 0
   File.binwrite(params[:destination], packet[:data], offset)
 end
@@ -141,14 +145,14 @@ re[:internals][:mqtt].add_topic_callback(re[:topics][:filerw_evt_write]) do |mes
   packet = re[:internals][:aes].decrypt(message.payload)
   packet = re[:internals][:serialization].deserialize(packet)
   packet = packet.transform_keys(&:to_sym)
-  puts packet[:length]
+  # packet[:length]
 end
 
 re[:internals][:mqtt].add_topic_callback(re[:topics][:filerw_evt_error]) do |message|
   packet = re[:internals][:aes].decrypt(message.payload)
   packet = re[:internals][:serialization].deserialize(packet)
   packet = packet.transform_keys(&:to_sym)
-  puts packet[:error]
+  #puts packet[:error]
 end
 
 re[:internals][:mqtt].connect(
