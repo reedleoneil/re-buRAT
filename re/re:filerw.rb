@@ -117,7 +117,8 @@ re[:internals][:mqtt].add_topic_callback(re[:topics][:filerw]) do |message|
     when 'read'
       topic = re[:topics][:filerw_cmd_read]
       packet = re[:packets][:read]
-      packet[:length] = params[:rate]
+      remaining_bytesio = file[:size].to_i - file[:bytesio].to_i
+      packet[:length] = remaining_bytesio >= params[:rate] ? params[:rate] : remaining_bytesio
     when 'write'
       topic = re[:topics][:filerw_cmd_write]
       packet = re[:packets][:write]
