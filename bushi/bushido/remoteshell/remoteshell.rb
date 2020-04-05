@@ -29,7 +29,7 @@ class RemoteShell
           @on_read.call(data)
         end
       rescue StandardError => error
-        @on_error.call(error)
+        @on_error.call(error.full_message)
       end
     }
   end

@@ -47,14 +47,22 @@ module Bushido
 
     def read(id, length)
       file = @files.find { |file| file.id == id }
-      data = file.read(length)
-      @on_read.call(id, data)
+      begin
+        data = file.read(length)
+        @on_read.call(id, data)
+      rescue StandardError => error
+        @on_error.call(id, error.full_message)
+      end
     end
 
     def write(id, data)
       file = @files.find { |file| file.id == id }
-      length = file.write(data)
-      @on_write.call(id, length)
+      begin
+        length = file.write(data)
+        @on_write.call(id, length)
+      rescue StandardError => error
+        @on_error.call(id, error.full_message)
+      end
     end
   end
 end
