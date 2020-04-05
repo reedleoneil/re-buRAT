@@ -16,13 +16,13 @@ module Internals
     end
 
     def render_banner(banner)
-      font = TTY::Font.new(['3d', 'block', 'doom', 'standard', 'starwars', 'straigth'].sample)
+      font = TTY::Font.new(['3d', 'block', 'doom', 'standard', 'starwars', 'straight'].sample)
       puts font.write(banner)
     end
 
     def progressbar(total)
       TTY::ProgressBar.new(
-        "downloading :eta [:bar] :percent :current_byte/:total_byte :byte_rate/s :elapsed",
+        "ETA :eta [:bar] :percent :current_byte/:total_byte :byte_rate/s :elapsed",
         total: total,
         width: 100,
         frequency: 60,
