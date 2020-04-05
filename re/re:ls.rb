@@ -62,7 +62,7 @@ re[:internals][:mqtt].add_topic_callback(re[:topics][:bushi]) do |message|
 		re[:bushi].each_value do |value|
 			data.push(value.fetch_values(:id, :host, :os, :ip, :status))
 		end
-		re[:internals][:ui].render_bushi_table(data)
+		re[:internals][:ui].render_table_bushi(data)
   rescue StandardError => error
     puts error.backtrace
   end
