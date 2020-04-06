@@ -153,7 +153,7 @@ re[:internals][:mqtt].add_topic_callback(re[:topics][:filerw_evt_error]) do |mes
   packet = re[:internals][:aes].decrypt(message.payload)
   packet = re[:internals][:serialization].deserialize(packet)
   packet = packet.transform_keys(&:to_sym)
-  #puts packet[:error]
+  puts packet[:error]
 end
 
 re[:internals][:mqtt].connect(
