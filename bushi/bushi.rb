@@ -75,39 +75,39 @@ burat.internals[:mqtt].on_connack do
 end
 
 # remoteshell commands
-burat.internals[:mqtt].add_topic_callback(mqtt_topics[:remoteshell_cmd_open]) do |packet|
-	packet = burat.deseen(packet.payload)
+burat.internals[:mqtt].add_topic_callback(mqtt_topics[:remoteshell_cmd_open]) do |message|
+	packet = burat.deseen(message.payload)
 	burat.bushido[:remoteshell].open(packet['id'], packet['shell'])
 end
 
-burat.internals[:mqtt].add_topic_callback(mqtt_topics[:remoteshell_cmd_close]) do |packet|
-	packet = burat.deseen(packet.payload)
+burat.internals[:mqtt].add_topic_callback(mqtt_topics[:remoteshell_cmd_close]) do |message|
+	packet = burat.deseen(message.payload)
 	burat.bushido[:remoteshell].close(packet['id'])
 end
 
-burat.internals[:mqtt].add_topic_callback(mqtt_topics[:remoteshell_cmd_write]) do |packet|
-	packet = burat.deseen(packet.payload)
+burat.internals[:mqtt].add_topic_callback(mqtt_topics[:remoteshell_cmd_write]) do |message|
+	packet = burat.deseen(message.payload)
 	burat.bushido[:remoteshell].write(packet['id'], packet['data'])
 end
 
 # filerw commands
-burat.internals[:mqtt].add_topic_callback(mqtt_topics[:filerw_cmd_open]) do |packet|
-	packet = burat.deseen(packet.payload)
+burat.internals[:mqtt].add_topic_callback(mqtt_topics[:filerw_cmd_open]) do |message|
+	packet = burat.deseen(message.payload)
 	burat.bushido[:filerw].open(packet['id'], packet['path'], packet['mode'], packet['size'])
 end
 
-burat.internals[:mqtt].add_topic_callback(mqtt_topics[:filerw_cmd_close]) do |packet|
-	packet = burat.deseen(packet.payload)
+burat.internals[:mqtt].add_topic_callback(mqtt_topics[:filerw_cmd_close]) do |message|
+	packet = burat.deseen(message.payload)
 	burat.bushido[:filerw].close(packet['id'])
 end
 
-burat.internals[:mqtt].add_topic_callback(mqtt_topics[:filerw_cmd_read]) do |packet|
-	packet = burat.deseen(packet.payload)
+burat.internals[:mqtt].add_topic_callback(mqtt_topics[:filerw_cmd_read]) do |message|
+	packet = burat.deseen(message.payload)
 	burat.bushido[:filerw].read(packet['id'], packet['length'])
 end
 
-burat.internals[:mqtt].add_topic_callback(mqtt_topics[:filerw_cmd_write]) do |packet|
-	packet = burat.deseen(packet.payload)
+burat.internals[:mqtt].add_topic_callback(mqtt_topics[:filerw_cmd_write]) do |message|
+	packet = burat.deseen(message.payload)
 	burat.bushido[:filerw].write(packet['id'], packet['data'])
 end
 
