@@ -55,4 +55,28 @@ class BuRat
   	data = @internals[:serialization].deserialize(data)
   	return data
   end
+
+  def add_topic_callback(topic, &block)
+    #topic = digest_topic(topic)
+    @internals[:mqtt].add_topic_callback(topic, block)
+  end
+
+  def publish(id, topic, payload="", retain=false, qos=0)
+    topic = topic.dup
+    topic['+'] = id
+    #topic = digest_topic(topic)
+    @internals[:mqtt].publish(topic, payload, retain, qos)
+  end
+
+  private
+  def digest_topic(topic)
+    levels = topic.split('/')
+  	levels.each_with_index do |level, index|
+  		if level != '+' && level != '#' then
+  			levels[index] = @internals[:digest].digest(level)
+  		end
+  	end
+  	topic = levels.join('/')
+    return topic
+  end
 end

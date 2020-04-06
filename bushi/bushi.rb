@@ -48,6 +48,10 @@ burat.internals[:rsa].config({
 	:encoded_key => key
 })
 
+burat.internals[:digest].config({
+	:digest => 'md5'
+})
+
 burat.internals[:mqtt].host = 'localhost'
 burat.internals[:mqtt].port = 1883
 burat.internals[:mqtt].persistent = true
@@ -75,38 +79,38 @@ burat.internals[:mqtt].on_connack do
 end
 
 # remoteshell commands
-burat.internals[:mqtt].add_topic_callback(mqtt_topics[:remoteshell_cmd_open]) do |message|
+burat.add_topic_callback(mqtt_topics[:remoteshell_cmd_open]) do |message|
 	packet = burat.deseen(message.payload)
 	burat.bushido[:remoteshell].open(packet['id'], packet['shell'])
 end
 
-burat.internals[:mqtt].add_topic_callback(mqtt_topics[:remoteshell_cmd_close]) do |message|
+burat.add_topic_callback(mqtt_topics[:remoteshell_cmd_close]) do |message|
 	packet = burat.deseen(message.payload)
 	burat.bushido[:remoteshell].close(packet['id'])
 end
 
-burat.internals[:mqtt].add_topic_callback(mqtt_topics[:remoteshell_cmd_write]) do |message|
+burat.add_topic_callback(mqtt_topics[:remoteshell_cmd_write]) do |message|
 	packet = burat.deseen(message.payload)
 	burat.bushido[:remoteshell].write(packet['id'], packet['data'])
 end
 
 # filerw commands
-burat.internals[:mqtt].add_topic_callback(mqtt_topics[:filerw_cmd_open]) do |message|
+burat.add_topic_callback(mqtt_topics[:filerw_cmd_open]) do |message|
 	packet = burat.deseen(message.payload)
 	burat.bushido[:filerw].open(packet['id'], packet['path'], packet['mode'], packet['size'])
 end
 
-burat.internals[:mqtt].add_topic_callback(mqtt_topics[:filerw_cmd_close]) do |message|
+burat.add_topic_callback(mqtt_topics[:filerw_cmd_close]) do |message|
 	packet = burat.deseen(message.payload)
 	burat.bushido[:filerw].close(packet['id'])
 end
 
-burat.internals[:mqtt].add_topic_callback(mqtt_topics[:filerw_cmd_read]) do |message|
+burat.add_topic_callback(mqtt_topics[:filerw_cmd_read]) do |message|
 	packet = burat.deseen(message.payload)
 	burat.bushido[:filerw].read(packet['id'], packet['length'])
 end
 
-burat.internals[:mqtt].add_topic_callback(mqtt_topics[:filerw_cmd_write]) do |message|
+burat.add_topic_callback(mqtt_topics[:filerw_cmd_write]) do |message|
 	packet = burat.deseen(message.payload)
 	burat.bushido[:filerw].write(packet['id'], packet['data'])
 end
@@ -120,16 +124,14 @@ burat.bushido[:remoteshell].on :open do |id|
 		:shell	=> remoteshell.shell
 	}
 	packet = burat.seen(packet)
-	topic = mqtt_topics[:remoteshell].dup
-	topic['+'] = id
-	burat.internals[:mqtt].publish(topic, packet, true, 2)
+	topic = mqtt_topics[:remoteshell]
+	burat.publish(id, topic, packet, true, 2)
 end
 
 burat.bushido[:remoteshell].on :close do |id|
 	puts "remoteshell.close #{id}"
-	topic = mqtt_topics[:remoteshell].dup
-	topic['+'] = id
-	burat.internals[:mqtt].publish(topic, nil, true, 2)
+	topic = mqtt_topics[:remoteshell]
+	burat.publish(id, topic, nil, true, 2)
 end
 
 burat.bushido[:remoteshell].on :read do |id, data|
@@ -139,9 +141,8 @@ burat.bushido[:remoteshell].on :read do |id, data|
 		:data		=> data
 	}
 	packet = burat.seen(packet)
-	topic = mqtt_topics[:remoteshell_evt_read].dup
-	topic['+'] = id
-	burat.internals[:mqtt].publish(topic, packet, false, 2)
+	topic = mqtt_topics[:remoteshell_evt_read]
+	burat.publish(id, topic, packet, false, 2)
 end
 
 burat.bushido[:remoteshell].on :write do |id, data|
@@ -151,9 +152,8 @@ burat.bushido[:remoteshell].on :write do |id, data|
 		:data		=> data
 	}
 	packet = burat.seen(packet)
-	topic = mqtt_topics[:remoteshell_evt_write].dup
-	topic['+'] = id
-	burat.internals[:mqtt].publish(topic, packet, false, 2)
+	topic = mqtt_topics[:remoteshell_evt_write]
+	burat.publish(id, topic, packet, false, 2)
 end
 
 burat.bushido[:remoteshell].on :error do |id, error|
@@ -163,9 +163,8 @@ burat.bushido[:remoteshell].on :error do |id, error|
 		:error	=> error
 	}
 	packet = burat.seen(packet)
-	topic = mqtt_topics[:remoteshell_evt_error].dup
-	topic['+'] = id
-	burat.internals[:mqtt].publish(topic, packet, false, 2)
+	topic = mqtt_topics[:remoteshell_evt_error]
+	burat.publish(id, topic, packet, false, 2)
 end
 
 # filerw events
@@ -180,16 +179,14 @@ burat.bushido[:filerw].on :open do |id|
 		:bytesio	=> file.bytesio
 	}
 	packet = burat.seen(packet)
-	topic = mqtt_topics[:filerw].dup
-	topic['+'] = id
-	burat.internals[:mqtt].publish(topic, packet, true, 2)
+	topic = mqtt_topics[:filerw]
+	burat.publish(id, topic, packet, true, 2)
 end
 
 burat.bushido[:filerw].on :close do |id|
 	puts "filerw.close #{id}"
-	topic = mqtt_topics[:filerw].dup
-	topic['+'] = id
-	burat.internals[:mqtt].publish(topic, nil, true, 2)
+	topic = mqtt_topics[:filerw]
+	burat.publish(id, topic, nil, true, 2)
 end
 
 burat.bushido[:filerw].on :read do |id, data|
@@ -199,9 +196,8 @@ burat.bushido[:filerw].on :read do |id, data|
 		:data		=> data
 	}
 	packet = burat.seen(packet)
-	topic = mqtt_topics[:filerw_evt_read].dup
-	topic['+'] = id
-	burat.internals[:mqtt].publish(topic, packet, false, 2)
+	topic = mqtt_topics[:filerw_evt_read]
+	burat.publish(id, topic, packet, false, 2)
 
 	file = burat.bushido[:filerw].files.find { |file| file.id == id }
 	packet = {
@@ -212,9 +208,8 @@ burat.bushido[:filerw].on :read do |id, data|
 		:bytesio	=> file.bytesio
 	}
 	packet = burat.seen(packet)
-	topic = mqtt_topics[:filerw].dup
-	topic['+'] = id
-	burat.internals[:mqtt].publish(topic, packet, true, 2)
+	topic = mqtt_topics[:filerw]
+	burat.publish(id, topic, packet, true, 2)
 end
 
 burat.bushido[:filerw].on :write do |id, length|
@@ -224,9 +219,8 @@ burat.bushido[:filerw].on :write do |id, length|
 		:length		=> length
 	}
 	packet = burat.seen(packet)
-	topic = mqtt_topics[:filerw_evt_write].dup
-	topic['+'] = id
-	burat.internals[:mqtt].publish(topic, packet, false, 2)
+	topic = mqtt_topics[:filerw_evt_write]
+	burat.publish(id, topic, packet, false, 2)
 
 	file = burat.bushido[:filerw].files.find { |file| file.id == id }
 	packet = {
@@ -237,9 +231,8 @@ burat.bushido[:filerw].on :write do |id, length|
 		:bytesio	=> file.bytesio
 	}
 	packet = burat.seen(packet)
-	topic = mqtt_topics[:filerw].dup
-	topic['+'] = id
-	burat.internals[:mqtt].publish(topic, packet, true, 2)
+	topic = mqtt_topics[:filerw]
+	burat.publish(id, topic, packet, true, 2)
 end
 
 burat.bushido[:filerw].on :error do |id, error|
@@ -249,9 +242,8 @@ burat.bushido[:filerw].on :error do |id, error|
 		:error	=> error
 	}
 	packet = burat.seen(packet)
-	topic = mqtt_topics[:filerw_evt_error].dup
-	topic['+'] = id
-	burat.internals[:mqtt].publish(topic, packet, false, 2)
+	topic = mqtt_topics[:filerw_evt_error]
+	burat.publish(id, topic, packet, false, 2)
 end
 
 burat.internals[:mqtt].connect(
