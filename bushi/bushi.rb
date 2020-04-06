@@ -72,7 +72,7 @@ burat.internals[:mqtt].on_connack do
 	burat.internals[:mqtt].publish(mqtt_topics[:bushi], packet, true, 2)
 	Thread.new {
 		loop do
-			burat.internals[:mqtt].publish(mqtt_topics[:nil], 'nil', false, 2)
+			burat.internals[:mqtt].publish(mqtt_topics[:nil], nil, false, 2)
 			sleep burat.internals[:mqtt].keep_alive
 		end
 	}

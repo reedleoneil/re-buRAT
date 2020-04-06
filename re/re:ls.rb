@@ -43,7 +43,7 @@ re[:internals][:mqtt].reconnect_delay = 60
 re[:internals][:mqtt].on_connack do
   Thread.new {
     loop do
-      re[:internals][:mqtt].publish(re[:topics][:nil], 'nil', false, 2)
+      re[:internals][:mqtt].publish(re[:topics][:nil], nil, false, 2)
       sleep re[:internals][:mqtt].keep_alive
     end
   }
