@@ -254,7 +254,7 @@ burat.internals[:mqtt].connect(
 	burat.internals[:mqtt].blocking
 )
 
-burat.internals[:mqtt].subscribe(["#", 2])
+burat.subscribe()
 
 loop do
 	burat.internals[:mqtt].loop_read

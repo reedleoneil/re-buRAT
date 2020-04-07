@@ -28,6 +28,7 @@ class BuRat
       :remoteshell    => Bushido::BuRemoteShell.new,
       :filerw         => Bushido::BuFileReadWrite.new
     }
+    @cmd_topics = []
   end
 
   def profile()
@@ -58,6 +59,7 @@ class BuRat
 
   def add_topic_callback(topic, &block)
     #topic = digest_topic(topic)
+    @cmd_topics.push([topic, 2])
     @internals[:mqtt].add_topic_callback(topic, block)
   end
 
@@ -66,6 +68,10 @@ class BuRat
     topic['+'] = id
     #topic = digest_topic(topic)
     @internals[:mqtt].publish(topic, payload, retain, qos)
+  end
+
+  def subscribe()
+    @internals[:mqtt].subscribe(@cmd_topics)
   end
 
   private
