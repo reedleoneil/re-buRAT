@@ -36,12 +36,9 @@ mqtt_topics = {
 	:filerw_evt_error				=> "/bu/bushi/#{burat.id}/bushido/filerw/+/evt/error"
 }
 
-cipher = OpenSSL::Cipher::AES.new(128, :CTR)
 burat.internals[:aes].config({
 	:key_length => 128,
-	:mode => :CTR,
-	:key => cipher.random_key,
-	:iv => cipher.random_iv
+	:mode => :CTR
 })
 
 burat.internals[:rsa].config({

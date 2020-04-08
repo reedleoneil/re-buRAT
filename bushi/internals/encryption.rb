@@ -22,14 +22,13 @@ module Internals
   class AES
     attr_reader :key, :iv
     def config(config)
-      @key_length = config[:key_length]
-      @mode = config[:mode]
-      @key = config[:key]
-      @iv = config[:iv]
+      @cipher = OpenSSL::Cipher::AES.new(config[:key_length], config[:mode])
+      @key = config[:key] ? config[:key] : @cipher.random_key
+      @iv = config[:iv] ? config[:iv] : @cipher.random_iv
     end
 
     def encrypt(data)
-      cipher = OpenSSL::Cipher::AES.new(@key_length, @mode)
+      cipher = @cipher
       cipher.key = @key
       cipher.iv = @iv
       cipher.encrypt
@@ -37,7 +36,7 @@ module Internals
     end
 
     def decrypt(data)
-      decipher = OpenSSL::Cipher::AES.new(@key_length, @mode)
+      decipher = @cipher
       decipher.key = @key
       decipher.iv = @iv
       decipher.decrypt
