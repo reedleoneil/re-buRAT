@@ -2,114 +2,67 @@ require 'base64'
 require 'paho-mqtt'
 require_relative 'burat'
 
-key = ''
-client = PahoMqtt::Client.new
-client.on_message do |message|
-	key = message.payload
-	client.disconnect
-end
-client.connect('localhost', 1883)
-client.subscribe(["/bu/public_key", 2])
-while key == ''
-	sleep 1
-end
-
 burat = BuRat.new
-
-mqtt_topics = {
-	:nil										=> "/bu/nil",
-	:bushi									=> "/bu/bushi/#{burat.id}",
-	:remoteshell						=> "/bu/bushi/#{burat.id}/bushido/remoteshell/+",
-	:remoteshell_cmd_open		=> "/bu/bushi/#{burat.id}/bushido/remoteshell/+/cmd/open",
-	:remoteshell_cmd_close	=> "/bu/bushi/#{burat.id}/bushido/remoteshell/+/cmd/close",
-	:remoteshell_cmd_write	=> "/bu/bushi/#{burat.id}/bushido/remoteshell/+/cmd/write",
-	:remoteshell_evt_read		=> "/bu/bushi/#{burat.id}/bushido/remoteshell/+/evt/read",
-	:remoteshell_evt_write	=> "/bu/bushi/#{burat.id}/bushido/remoteshell/+/evt/write",
-	:remoteshell_evt_error	=> "/bu/bushi/#{burat.id}/bushido/remoteshell/+/evt/error",
-	:filerw									=> "/bu/bushi/#{burat.id}/bushido/filerw/+",
-	:filerw_cmd_open				=> "/bu/bushi/#{burat.id}/bushido/filerw/+/cmd/open",
-	:filerw_cmd_close				=> "/bu/bushi/#{burat.id}/bushido/filerw/+/cmd/close",
-	:filerw_cmd_read				=> "/bu/bushi/#{burat.id}/bushido/filerw/+/cmd/read",
-	:filerw_cmd_write				=> "/bu/bushi/#{burat.id}/bushido/filerw/+/cmd/write",
-	:filerw_evt_read				=> "/bu/bushi/#{burat.id}/bushido/filerw/+/evt/read",
-	:filerw_evt_write				=> "/bu/bushi/#{burat.id}/bushido/filerw/+/evt/write",
-	:filerw_evt_error				=> "/bu/bushi/#{burat.id}/bushido/filerw/+/evt/error"
-}
-
-burat.internals[:aes].config({
-	:key_length => 128,
-	:mode => :CTR
-})
-
-burat.internals[:rsa].config({
-	:encoded_key => key
-})
 
 burat.internals[:digest].config({
 	:digest => 'md5'
 })
 
-burat.internals[:mqtt].host = 'localhost'
-burat.internals[:mqtt].port = 1883
-burat.internals[:mqtt].persistent = true
-burat.internals[:mqtt].blocking = true
-burat.internals[:mqtt].reconnect_limit = 3
-burat.internals[:mqtt].reconnect_delay = 60
-burat.internals[:mqtt].will_topic = mqtt_topics[:bushi]
-burat.internals[:mqtt].will_payload = Base64.encode64(burat.internals[:rsa].encrypt(burat.internals[:serialization].serialize(burat.profile)))
-burat.internals[:mqtt].will_qos = 2
-burat.internals[:mqtt].will_retain = true
-
-burat.internals[:mqtt].on_connack do
-	burat.status = :online
-	packet = burat.profile
-	packet = burat.internals[:serialization].serialize(packet)
-	packet = burat.internals[:rsa].encrypt(packet)
-	packet = Base64.encode64(packet)
-	burat.internals[:mqtt].publish(mqtt_topics[:bushi], packet, true, 2)
-	Thread.new {
-		loop do
-			burat.internals[:mqtt].publish(mqtt_topics[:nil], nil, false, 2)
-			sleep burat.internals[:mqtt].keep_alive
-		end
-	}
-end
+burat.add_topics({
+	:nil										=> "/bu/nil",
+	:bushi									=> "/bu/bushi/BURAT",
+	:remoteshell						=> "/bu/bushi/BURAT/bushido/remoteshell/+",
+	:remoteshell_cmd_open		=> "/bu/bushi/BURAT/bushido/remoteshell/+/cmd/open",
+	:remoteshell_cmd_close	=> "/bu/bushi/BURAT/bushido/remoteshell/+/cmd/close",
+	:remoteshell_cmd_write	=> "/bu/bushi/BURAT/bushido/remoteshell/+/cmd/write",
+	:remoteshell_evt_read		=> "/bu/bushi/BURAT/bushido/remoteshell/+/evt/read",
+	:remoteshell_evt_write	=> "/bu/bushi/BURAT/bushido/remoteshell/+/evt/write",
+	:remoteshell_evt_error	=> "/bu/bushi/BURAT/bushido/remoteshell/+/evt/error",
+	:filerw									=> "/bu/bushi/BURAT/bushido/filerw/+",
+	:filerw_cmd_open				=> "/bu/bushi/BURAT/bushido/filerw/+/cmd/open",
+	:filerw_cmd_close				=> "/bu/bushi/BURAT/bushido/filerw/+/cmd/close",
+	:filerw_cmd_read				=> "/bu/bushi/BURAT/bushido/filerw/+/cmd/read",
+	:filerw_cmd_write				=> "/bu/bushi/BURAT/bushido/filerw/+/cmd/write",
+	:filerw_evt_read				=> "/bu/bushi/BURAT/bushido/filerw/+/evt/read",
+	:filerw_evt_write				=> "/bu/bushi/BURAT/bushido/filerw/+/evt/write",
+	:filerw_evt_error				=> "/bu/bushi/BURAT/bushido/filerw/+/evt/error"
+})
 
 # remoteshell commands
-burat.add_topic_callback(mqtt_topics[:remoteshell_cmd_open]) do |message|
-	packet = burat.deseen(message.payload)
-	burat.bushido[:remoteshell].open(packet['id'], packet['shell'])
+burat.add_topic_callback(:remoteshell_cmd_open) do |message|
+	packet = burat.decryse(message.payload)
+	burat.bushido[:remoteshell].open(packet.id, packet.shell)
 end
 
-burat.add_topic_callback(mqtt_topics[:remoteshell_cmd_close]) do |message|
-	packet = burat.deseen(message.payload)
-	burat.bushido[:remoteshell].close(packet['id'])
+burat.add_topic_callback(:remoteshell_cmd_close) do |message|
+	packet = burat.decryse(message.payload)
+	burat.bushido[:remoteshell].close(packet.id)
 end
 
-burat.add_topic_callback(mqtt_topics[:remoteshell_cmd_write]) do |message|
-	packet = burat.deseen(message.payload)
-	burat.bushido[:remoteshell].write(packet['id'], packet['data'])
+burat.add_topic_callback(:remoteshell_cmd_write) do |message|
+	packet = burat.decryse(message.payload)
+	burat.bushido[:remoteshell].write(packet.id, packet.data)
 end
 
 # filerw commands
-burat.add_topic_callback(mqtt_topics[:filerw_cmd_open]) do |message|
-	packet = burat.deseen(message.payload)
-	burat.bushido[:filerw].open(packet['id'], packet['path'], packet['mode'], packet['size'])
+burat.add_topic_callback(:filerw_cmd_open) do |message|
+	packet = burat.decryse(message.payload)
+	burat.bushido[:filerw].open(packet.id, packet.path, packet.mode, packet.size)
 end
 
-burat.add_topic_callback(mqtt_topics[:filerw_cmd_close]) do |message|
-	packet = burat.deseen(message.payload)
-	burat.bushido[:filerw].close(packet['id'])
+burat.add_topic_callback(:filerw_cmd_close) do |message|
+	packet = burat.decryse(message.payload)
+	burat.bushido[:filerw].close(packet.id)
 end
 
-burat.add_topic_callback(mqtt_topics[:filerw_cmd_read]) do |message|
-	packet = burat.deseen(message.payload)
-	burat.bushido[:filerw].read(packet['id'], packet['length'])
+burat.add_topic_callback(:filerw_cmd_read) do |message|
+	packet = burat.decryse(message.payload)
+	burat.bushido[:filerw].read(packet.id, packet.length)
 end
 
-burat.add_topic_callback(mqtt_topics[:filerw_cmd_write]) do |message|
-	packet = burat.deseen(message.payload)
-	burat.bushido[:filerw].write(packet['id'], packet['data'])
+burat.add_topic_callback(:filerw_cmd_write) do |message|
+	packet = burat.decryse(message.payload)
+	burat.bushido[:filerw].write(packet.id, packet.data)
 end
 
 # remoteshell events
@@ -121,14 +74,12 @@ burat.bushido[:remoteshell].on :open do |id|
 		:shell	=> remoteshell.shell
 	}
 	packet = burat.seen(packet)
-	topic = mqtt_topics[:remoteshell]
-	burat.publish(id, topic, packet, true, 2)
+	burat.publish(id, :remoteshell, packet, true, 2)
 end
 
 burat.bushido[:remoteshell].on :close do |id|
 	puts "remoteshell.close #{id}"
-	topic = mqtt_topics[:remoteshell]
-	burat.publish(id, topic, nil, true, 2)
+	burat.publish(id, :remoteshell, nil, true, 2)
 end
 
 burat.bushido[:remoteshell].on :read do |id, data|
@@ -138,8 +89,7 @@ burat.bushido[:remoteshell].on :read do |id, data|
 		:data		=> data
 	}
 	packet = burat.seen(packet)
-	topic = mqtt_topics[:remoteshell_evt_read]
-	burat.publish(id, topic, packet, false, 2)
+	burat.publish(id, :remoteshell_evt_read, packet, false, 2)
 end
 
 burat.bushido[:remoteshell].on :write do |id, data|
@@ -149,8 +99,7 @@ burat.bushido[:remoteshell].on :write do |id, data|
 		:data		=> data
 	}
 	packet = burat.seen(packet)
-	topic = mqtt_topics[:remoteshell_evt_write]
-	burat.publish(id, topic, packet, false, 2)
+	burat.publish(id, :remoteshell_evt_write, packet, false, 2)
 end
 
 burat.bushido[:remoteshell].on :error do |id, error|
@@ -160,8 +109,7 @@ burat.bushido[:remoteshell].on :error do |id, error|
 		:error	=> error
 	}
 	packet = burat.seen(packet)
-	topic = mqtt_topics[:remoteshell_evt_error]
-	burat.publish(id, topic, packet, false, 2)
+	burat.publish(id, :remoteshell_evt_error, packet, false, 2)
 end
 
 # filerw events
@@ -176,13 +124,12 @@ burat.bushido[:filerw].on :open do |id|
 		:bytesio	=> file.bytesio
 	}
 	packet = burat.seen(packet)
-	topic = mqtt_topics[:filerw]
-	burat.publish(id, topic, packet, true, 2)
+	burat.publish(id, :filerw, packet, true, 2)
 end
 
 burat.bushido[:filerw].on :close do |id|
 	puts "filerw.close #{id}"
-	topic = mqtt_topics[:filerw]
+	:filerw
 	burat.publish(id, topic, nil, true, 2)
 end
 
@@ -193,8 +140,7 @@ burat.bushido[:filerw].on :read do |id, data|
 		:data		=> data
 	}
 	packet = burat.seen(packet)
-	topic = mqtt_topics[:filerw_evt_read]
-	burat.publish(id, topic, packet, false, 2)
+	burat.publish(id, :filerw_evt_read, packet, false, 2)
 
 	file = burat.bushido[:filerw].files.find { |file| file.id == id }
 	packet = {
@@ -205,8 +151,7 @@ burat.bushido[:filerw].on :read do |id, data|
 		:bytesio	=> file.bytesio
 	}
 	packet = burat.seen(packet)
-	topic = mqtt_topics[:filerw]
-	burat.publish(id, topic, packet, true, 2)
+	burat.publish(id, :filerw, packet, true, 2)
 end
 
 burat.bushido[:filerw].on :write do |id, length|
@@ -216,8 +161,7 @@ burat.bushido[:filerw].on :write do |id, length|
 		:length		=> length
 	}
 	packet = burat.seen(packet)
-	topic = mqtt_topics[:filerw_evt_write]
-	burat.publish(id, topic, packet, false, 2)
+	burat.publish(id, :filerw_evt_write, packet, false, 2)
 
 	file = burat.bushido[:filerw].files.find { |file| file.id == id }
 	packet = {
@@ -228,8 +172,7 @@ burat.bushido[:filerw].on :write do |id, length|
 		:bytesio	=> file.bytesio
 	}
 	packet = burat.seen(packet)
-	topic = mqtt_topics[:filerw]
-	burat.publish(id, topic, packet, true, 2)
+	burat.publish(id, :filerw, packet, true, 2)
 end
 
 burat.bushido[:filerw].on :error do |id, error|
@@ -239,18 +182,58 @@ burat.bushido[:filerw].on :error do |id, error|
 		:error	=> error
 	}
 	packet = burat.seen(packet)
-	topic = mqtt_topics[:filerw_evt_error]
-	burat.publish(id, topic, packet, false, 2)
+	burat.publish(id, :filerw_evt_error, packet, false, 2)
 end
 
-burat.internals[:mqtt].connect(
-	burat.internals[:mqtt].host,
-	burat.internals[:mqtt].port,
-	burat.internals[:mqtt].keep_alive,
-	burat.internals[:mqtt].persistent,
-	burat.internals[:mqtt].blocking
-)
+key = ''
+client = PahoMqtt::Client.new
+client.on_message do |message|
+	key = message.payload
+	client.disconnect
+end
+client.connect('localhost', 1883)
+client.subscribe(["/bu/public_key", 2])
+while key == ''
+	sleep 1
+end
 
+burat.internals[:aes].config({
+	:key_length => 128,
+	:mode => :CTR
+})
+
+burat.internals[:rsa].config({
+	:encoded_key => key
+})
+
+
+burat.internals[:mqtt].on_connack do
+	burat.status = :online
+	packet = burat.profile
+	packet = burat.internals[:serialization].serialize(packet)
+	packet = burat.internals[:rsa].encrypt(packet)
+	packet = Base64.encode64(packet)
+	burat.internals[:mqtt].publish(burat.topics[:bushi], packet, true, 2)
+	Thread.new {
+		loop do
+			burat.internals[:mqtt].publish(burat.topics[:nil], nil, false, 2)
+			sleep burat.internals[:mqtt].keep_alive
+		end
+	}
+end
+
+burat.internals[:mqtt].host = 'localhost'
+burat.internals[:mqtt].port = 1883
+burat.internals[:mqtt].persistent = true
+burat.internals[:mqtt].blocking = true
+burat.internals[:mqtt].reconnect_limit = 3
+burat.internals[:mqtt].reconnect_delay = 60
+burat.internals[:mqtt].will_topic = burat.topics[:bushi]
+burat.internals[:mqtt].will_payload = Base64.encode64(burat.internals[:rsa].encrypt(burat.internals[:serialization].serialize(burat.profile)))
+burat.internals[:mqtt].will_qos = 2
+burat.internals[:mqtt].will_retain = true
+
+burat.internals[:mqtt].connect()
 burat.subscribe()
 
 loop do
