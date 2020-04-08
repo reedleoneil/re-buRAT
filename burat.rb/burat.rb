@@ -1,3 +1,4 @@
+require 'base64'
 require 'open-uri'
 require 'os'
 require 'ostruct'
@@ -21,7 +22,10 @@ class BuRat
     @ip = 'test'
     @status = :offline
     @internals = {
-      :mqtt           => PahoMqtt::Client.new,
+      :mqtt           => {
+        :key => PahoMqtt::Client.new,
+        :burat => PahoMqtt::Client.new
+      },
       :serialization  => Internals::Serialization.new,
       :rsa            => Internals::RSA.new,
       :aes            => Internals::AES.new,
@@ -36,7 +40,7 @@ class BuRat
   end
 
   def profile()
-    return profile = {
+    profile = {
     	:id => @id,
     	:host => @host,
     	:os => @os,
@@ -47,6 +51,10 @@ class BuRat
     		:iv => @internals[:aes].iv
     	}
     }
+    profile = @internals[:serialization].serialize(profile)
+  	profile = @internals[:rsa].encrypt(profile)
+  	profile = Base64.encode64(profile)
+    return profile
   end
 
   def seen(data)
@@ -64,17 +72,17 @@ class BuRat
   def add_topic_callback(topic, &block)
     topic = @topics[topic]
     @cmd_topics.push([topic, 2])
-    @internals[:mqtt].add_topic_callback(topic, block)
+    @internals[:mqtt][:burat].add_topic_callback(topic, block)
   end
 
   def publish(id, topic, payload="", retain=false, qos=0)
     topic = @topics[topic].dup
     topic['+'] = id
-    @internals[:mqtt].publish(topic, payload, retain, qos)
+    @internals[:mqtt][:burat].publish(topic, payload, retain, qos)
   end
 
   def subscribe()
-    @internals[:mqtt].subscribe(@cmd_topics)
+    @internals[:mqtt][:burat].subscribe(@cmd_topics)
   end
 
   def add_topics(topics)
