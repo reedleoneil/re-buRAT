@@ -234,8 +234,9 @@ burat.internals[:mqtt][:burat].will_payload = burat.profile
 burat.internals[:mqtt][:burat].will_qos = 2
 burat.internals[:mqtt][:burat].will_retain = true
 
-burat.internals[:mqtt][:burat].connect()
-burat.subscribe()
+# burat.internals[:mqtt][:burat].connect()
+# burat.subscribe()
+burat.connect()
 
 loop do
 	burat.internals[:mqtt][:burat].loop_read

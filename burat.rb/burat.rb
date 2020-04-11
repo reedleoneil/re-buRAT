@@ -95,6 +95,17 @@ class BuRat
     @topics = topics
   end
 
+  def connect()
+    begin
+      @internals[:mqtt][:burat].connect()
+      @internals[:mqtt][:burat].subscribe(@cmd_topics)
+    rescue StandardError => error
+      puts error
+      sleep 11
+      connect()
+    end
+  end
+
   private
   def digest_topic(topic)
     levels = topic.split('/')
