@@ -31,7 +31,13 @@ burat.internals[:mqtt][:key].on_message do |message|
 	burat.internals[:mqtt][:key].disconnect
 end
 
-burat.internals[:mqtt][:key].connect('localhost', 1883)
+burat.internals[:mqtt][:key].host = 'localhost'
+burat.internals[:mqtt][:key].port = 1883
+burat.internals[:mqtt][:key].persistent = true
+burat.internals[:mqtt][:key].blocking = true
+burat.internals[:mqtt][:key].reconnect_limit = 3
+burat.internals[:mqtt][:key].reconnect_delay = 60
+burat.internals[:mqtt][:key].connect()
 burat.internals[:mqtt][:key].subscribe([burat.topics[:key], 2])
 
 while burat.internals[:mqtt][:key].connected?
