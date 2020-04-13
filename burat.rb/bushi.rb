@@ -204,24 +204,16 @@ burat.internals[:mqtt].on_connack do
 	burat.status = :online
 	packet = burat.profile
 	burat.internals[:mqtt].publish(burat.topics[:bushi], packet, true, 2)
-	Thread.new {
-		loop do
+end
+
+Thread.new {
+	loop do
+		if burat.internals[:mqtt].connected? then
 			burat.internals[:mqtt].publish(burat.topics[:nil], nil, false, 2)
 			sleep burat.internals[:mqtt].keep_alive
 		end
-	}
-end
-
-burat.internals[:mqtt].host = 'localhost'
-burat.internals[:mqtt].port = 1883
-burat.internals[:mqtt].persistent = true
-burat.internals[:mqtt].blocking = true
-burat.internals[:mqtt].reconnect_limit = 3
-burat.internals[:mqtt].reconnect_delay = 60
-burat.internals[:mqtt].will_topic = burat.topics[:bushi]
-burat.internals[:mqtt].will_payload = burat.profile
-burat.internals[:mqtt].will_qos = 2
-burat.internals[:mqtt].will_retain = true
+	end
+}
 
 loop do
 	begin
@@ -229,6 +221,16 @@ loop do
 		burat.internals[:mqtt].loop_write
 	rescue StandardError => error
 		puts error
+		burat.internals[:mqtt].host = 'localhost'
+		burat.internals[:mqtt].port = 1883
+		burat.internals[:mqtt].persistent = true
+		burat.internals[:mqtt].blocking = true
+		burat.internals[:mqtt].reconnect_limit = 3
+		burat.internals[:mqtt].reconnect_delay = 60
+		burat.internals[:mqtt].will_topic = burat.topics[:bushi]
+		burat.internals[:mqtt].will_payload = burat.profile
+		burat.internals[:mqtt].will_qos = 2
+		burat.internals[:mqtt].will_retain = true
 		burat.connect()
 	end
 end
