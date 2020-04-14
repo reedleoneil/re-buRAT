@@ -29,14 +29,14 @@ re.internals[:digest].config({
 })
 
 re.add_topics({
-  :bushi									=> "/bu/bushi/#{params[:bushi]}",
-  :remoteshell						=> "/bu/bushi/#{params[:bushi]}/bushido/remoteshell/#{params[:id]}",
-  :remoteshell_cmd_open		=> "/bu/bushi/#{params[:bushi]}/bushido/remoteshell/#{params[:id]}/cmd/open",
-  :remoteshell_cmd_close	=> "/bu/bushi/#{params[:bushi]}/bushido/remoteshell/#{params[:id]}/cmd/close",
-  :remoteshell_cmd_write	=> "/bu/bushi/#{params[:bushi]}/bushido/remoteshell/#{params[:id]}/cmd/write",
-  :remoteshell_evt_read		=> "/bu/bushi/#{params[:bushi]}/bushido/remoteshell/#{params[:id]}/evt/read",
-  :remoteshell_evt_write	=> "/bu/bushi/#{params[:bushi]}/bushido/remoteshell/#{params[:id]}/evt/write",
-  :remoteshell_evt_error	=> "/bu/bushi/#{params[:bushi]}/bushido/remoteshell/#{params[:id]}/evt/error"
+  :bushi									=> "bu/bushi/#{params[:bushi]}",
+  :remoteshell						=> "bu/bushi/#{params[:bushi]}/bushido/remoteshell/#{params[:id]}",
+  :remoteshell_cmd_open		=> "bu/bushi/#{params[:bushi]}/bushido/remoteshell/#{params[:id]}/cmd/open",
+  :remoteshell_cmd_close	=> "bu/bushi/#{params[:bushi]}/bushido/remoteshell/#{params[:id]}/cmd/close",
+  :remoteshell_cmd_write	=> "bu/bushi/#{params[:bushi]}/bushido/remoteshell/#{params[:id]}/cmd/write",
+  :remoteshell_evt_read		=> "bu/bushi/#{params[:bushi]}/bushido/remoteshell/#{params[:id]}/evt/read",
+  :remoteshell_evt_write	=> "bu/bushi/#{params[:bushi]}/bushido/remoteshell/#{params[:id]}/evt/write",
+  :remoteshell_evt_error	=> "bu/bushi/#{params[:bushi]}/bushido/remoteshell/#{params[:id]}/evt/error"
 })
 
 packets = {

@@ -24,23 +24,23 @@ burat.internals[:aes].config({
 })
 
 burat.add_topics({
-	:nil										=> "/bu/nil",
-	:bushi									=> "/bu/bushi/BURAT",
-	:remoteshell						=> "/bu/bushi/BURAT/bushido/remoteshell/+",
-	:remoteshell_cmd_open		=> "/bu/bushi/BURAT/bushido/remoteshell/+/cmd/open",
-	:remoteshell_cmd_close	=> "/bu/bushi/BURAT/bushido/remoteshell/+/cmd/close",
-	:remoteshell_cmd_write	=> "/bu/bushi/BURAT/bushido/remoteshell/+/cmd/write",
-	:remoteshell_evt_read		=> "/bu/bushi/BURAT/bushido/remoteshell/+/evt/read",
-	:remoteshell_evt_write	=> "/bu/bushi/BURAT/bushido/remoteshell/+/evt/write",
-	:remoteshell_evt_error	=> "/bu/bushi/BURAT/bushido/remoteshell/+/evt/error",
-	:filerw									=> "/bu/bushi/BURAT/bushido/filerw/+",
-	:filerw_cmd_open				=> "/bu/bushi/BURAT/bushido/filerw/+/cmd/open",
-	:filerw_cmd_close				=> "/bu/bushi/BURAT/bushido/filerw/+/cmd/close",
-	:filerw_cmd_read				=> "/bu/bushi/BURAT/bushido/filerw/+/cmd/read",
-	:filerw_cmd_write				=> "/bu/bushi/BURAT/bushido/filerw/+/cmd/write",
-	:filerw_evt_read				=> "/bu/bushi/BURAT/bushido/filerw/+/evt/read",
-	:filerw_evt_write				=> "/bu/bushi/BURAT/bushido/filerw/+/evt/write",
-	:filerw_evt_error				=> "/bu/bushi/BURAT/bushido/filerw/+/evt/error"
+	:nil										=> "bu/nil",
+	:bushi									=> "bu/bushi/BURAT",
+	:remoteshell						=> "bu/bushi/BURAT/bushido/remoteshell/+",
+	:remoteshell_cmd_open		=> "bu/bushi/BURAT/bushido/remoteshell/+/cmd/open",
+	:remoteshell_cmd_close	=> "bu/bushi/BURAT/bushido/remoteshell/+/cmd/close",
+	:remoteshell_cmd_write	=> "bu/bushi/BURAT/bushido/remoteshell/+/cmd/write",
+	:remoteshell_evt_read		=> "bu/bushi/BURAT/bushido/remoteshell/+/evt/read",
+	:remoteshell_evt_write	=> "bu/bushi/BURAT/bushido/remoteshell/+/evt/write",
+	:remoteshell_evt_error	=> "bu/bushi/BURAT/bushido/remoteshell/+/evt/error",
+	:filerw									=> "bu/bushi/BURAT/bushido/filerw/+",
+	:filerw_cmd_open				=> "bu/bushi/BURAT/bushido/filerw/+/cmd/open",
+	:filerw_cmd_close				=> "bu/bushi/BURAT/bushido/filerw/+/cmd/close",
+	:filerw_cmd_read				=> "bu/bushi/BURAT/bushido/filerw/+/cmd/read",
+	:filerw_cmd_write				=> "bu/bushi/BURAT/bushido/filerw/+/cmd/write",
+	:filerw_evt_read				=> "bu/bushi/BURAT/bushido/filerw/+/evt/read",
+	:filerw_evt_write				=> "bu/bushi/BURAT/bushido/filerw/+/evt/write",
+	:filerw_evt_error				=> "bu/bushi/BURAT/bushido/filerw/+/evt/error"
 })
 
 # remoteshell commands

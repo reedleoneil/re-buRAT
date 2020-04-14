@@ -24,8 +24,8 @@ re.internals[:rsa].config({
 })
 
 re.add_topics({
-  :nil    => "/bu/nil",
-  :bushi  => "/bu/bushi/+"
+  :nil    => "bu/nil",
+  :bushi  => "bu/bushi/+"
 })
 
 re.add_topic_callback(:bushi) do |message|

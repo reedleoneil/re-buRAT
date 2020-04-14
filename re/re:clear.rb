@@ -4,7 +4,7 @@ require 'paho-mqtt'
 require_relative 're'
 
 params = {
-	:topic => '/bu/#'
+	:topic => 'bu/#'
 }
 
 OptionParser.new do |opts|

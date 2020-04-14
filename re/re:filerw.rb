@@ -35,15 +35,15 @@ re.internals[:digest].config({
 })
 
 re.add_topics({
-  :bushi									=> "/bu/bushi/#{params[:bushi]}",
-  :filerw									=> "/bu/bushi/#{params[:bushi]}/bushido/filerw/#{params[:id]}",
-  :filerw_cmd_open				=> "/bu/bushi/#{params[:bushi]}/bushido/filerw/#{params[:id]}/cmd/open",
-  :filerw_cmd_close				=> "/bu/bushi/#{params[:bushi]}/bushido/filerw/#{params[:id]}/cmd/close",
-  :filerw_cmd_read				=> "/bu/bushi/#{params[:bushi]}/bushido/filerw/#{params[:id]}/cmd/read",
-  :filerw_cmd_write				=> "/bu/bushi/#{params[:bushi]}/bushido/filerw/#{params[:id]}/cmd/write",
-  :filerw_evt_read				=> "/bu/bushi/#{params[:bushi]}/bushido/filerw/#{params[:id]}/evt/read",
-  :filerw_evt_write				=> "/bu/bushi/#{params[:bushi]}/bushido/filerw/#{params[:id]}/evt/write",
-  :filerw_evt_error				=> "/bu/bushi/#{params[:bushi]}/bushido/filerw/#{params[:id]}/evt/error"
+  :bushi									=> "bu/bushi/#{params[:bushi]}",
+  :filerw									=> "bu/bushi/#{params[:bushi]}/bushido/filerw/#{params[:id]}",
+  :filerw_cmd_open				=> "bu/bushi/#{params[:bushi]}/bushido/filerw/#{params[:id]}/cmd/open",
+  :filerw_cmd_close				=> "bu/bushi/#{params[:bushi]}/bushido/filerw/#{params[:id]}/cmd/close",
+  :filerw_cmd_read				=> "bu/bushi/#{params[:bushi]}/bushido/filerw/#{params[:id]}/cmd/read",
+  :filerw_cmd_write				=> "bu/bushi/#{params[:bushi]}/bushido/filerw/#{params[:id]}/cmd/write",
+  :filerw_evt_read				=> "bu/bushi/#{params[:bushi]}/bushido/filerw/#{params[:id]}/evt/read",
+  :filerw_evt_write				=> "bu/bushi/#{params[:bushi]}/bushido/filerw/#{params[:id]}/evt/write",
+  :filerw_evt_error				=> "bu/bushi/#{params[:bushi]}/bushido/filerw/#{params[:id]}/evt/error"
 })
 
 packets = {
