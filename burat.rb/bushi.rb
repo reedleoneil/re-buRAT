@@ -84,10 +84,7 @@ end
 burat.bushido[:remoteshell].on :open do |id|
   puts "remoteshell.open #{id}"
 	remoteshell = burat.bushido[:remoteshell].remoteshells.find { |remoteshell| remoteshell.id == id }
-	packet = {
-		:id			=> id,
-		:shell	=> remoteshell.shell
-	}
+	packet = { :id => id, :shell => remoteshell.shell }
 	packet = burat.seen(packet)
 	burat.publish(id, :remoteshell, packet, true, 2)
 end
@@ -99,30 +96,21 @@ end
 
 burat.bushido[:remoteshell].on :read do |id, data|
   puts "remoteshell.read #{id} #{data}"
-	packet = {
-		:id			=> id,
-		:data		=> data
-	}
+	packet = { :id => id, :data	=> data }
 	packet = burat.seen(packet)
 	burat.publish(id, :remoteshell_evt_read, packet, false, 2)
 end
 
 burat.bushido[:remoteshell].on :write do |id, data|
   puts "remoteshell.write #{id} #{data}"
-	packet = {
-		:id			=> id,
-		:data		=> data
-	}
+	packet = { :id => id, :data => data	}
 	packet = burat.seen(packet)
 	burat.publish(id, :remoteshell_evt_write, packet, false, 2)
 end
 
 burat.bushido[:remoteshell].on :error do |id, error|
   puts "remoteshell.error #{id} #{error}"
-	packet = {
-		:id			=> id,
-		:error	=> error
-	}
+	packet = { :id => id, :error	=> error }
 	packet = burat.seen(packet)
 	burat.publish(id, :remoteshell_evt_error, packet, false, 2)
 end
@@ -150,10 +138,7 @@ end
 
 burat.bushido[:filerw].on :read do |id, data|
 	puts "filerw.read #{id} #{data}"
-	packet = {
-		:id			=> id,
-		:data		=> data
-	}
+	packet = { :id => id, :data	=> data }
 	packet = burat.seen(packet)
 	burat.publish(id, :filerw_evt_read, packet, false, 2)
 
@@ -171,10 +156,7 @@ end
 
 burat.bushido[:filerw].on :write do |id, length|
   puts "filerw.write #{id} #{length}"
-	packet = {
-		:id			=> id,
-		:length		=> length
-	}
+	packet = { :id => id,	:length	=> length }
 	packet = burat.seen(packet)
 	burat.publish(id, :filerw_evt_write, packet, false, 2)
 
@@ -192,10 +174,7 @@ end
 
 burat.bushido[:filerw].on :error do |id, error|
   puts "filerw.error #{id} #{error}"
-	packet = {
-		:id			=> id,
-		:error	=> error
-	}
+	packet = { :id => id, :error => error	}
 	packet = burat.seen(packet)
 	burat.publish(id, :filerw_evt_error, packet, false, 2)
 end
