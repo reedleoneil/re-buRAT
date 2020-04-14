@@ -2,26 +2,6 @@ require_relative 'burat'
 
 burat = BuRat.new
 
-burat.add_topics({
-	:nil										=> "/bu/nil",
-	:bushi									=> "/bu/bushi/BURAT",
-	:remoteshell						=> "/bu/bushi/BURAT/bushido/remoteshell/+",
-	:remoteshell_cmd_open		=> "/bu/bushi/BURAT/bushido/remoteshell/+/cmd/open",
-	:remoteshell_cmd_close	=> "/bu/bushi/BURAT/bushido/remoteshell/+/cmd/close",
-	:remoteshell_cmd_write	=> "/bu/bushi/BURAT/bushido/remoteshell/+/cmd/write",
-	:remoteshell_evt_read		=> "/bu/bushi/BURAT/bushido/remoteshell/+/evt/read",
-	:remoteshell_evt_write	=> "/bu/bushi/BURAT/bushido/remoteshell/+/evt/write",
-	:remoteshell_evt_error	=> "/bu/bushi/BURAT/bushido/remoteshell/+/evt/error",
-	:filerw									=> "/bu/bushi/BURAT/bushido/filerw/+",
-	:filerw_cmd_open				=> "/bu/bushi/BURAT/bushido/filerw/+/cmd/open",
-	:filerw_cmd_close				=> "/bu/bushi/BURAT/bushido/filerw/+/cmd/close",
-	:filerw_cmd_read				=> "/bu/bushi/BURAT/bushido/filerw/+/cmd/read",
-	:filerw_cmd_write				=> "/bu/bushi/BURAT/bushido/filerw/+/cmd/write",
-	:filerw_evt_read				=> "/bu/bushi/BURAT/bushido/filerw/+/evt/read",
-	:filerw_evt_write				=> "/bu/bushi/BURAT/bushido/filerw/+/evt/write",
-	:filerw_evt_error				=> "/bu/bushi/BURAT/bushido/filerw/+/evt/error"
-})
-
 burat.internals[:rsa].config({
 :encoded_key => '-----BEGIN PUBLIC KEY-----
 MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA3UEh+HOkcBDCuJYRNgRb
@@ -41,6 +21,26 @@ burat.internals[:digest].config({
 burat.internals[:aes].config({
 	:key_length => 128,
 	:mode => :CTR
+})
+
+burat.add_topics({
+	:nil										=> "/bu/nil",
+	:bushi									=> "/bu/bushi/BURAT",
+	:remoteshell						=> "/bu/bushi/BURAT/bushido/remoteshell/+",
+	:remoteshell_cmd_open		=> "/bu/bushi/BURAT/bushido/remoteshell/+/cmd/open",
+	:remoteshell_cmd_close	=> "/bu/bushi/BURAT/bushido/remoteshell/+/cmd/close",
+	:remoteshell_cmd_write	=> "/bu/bushi/BURAT/bushido/remoteshell/+/cmd/write",
+	:remoteshell_evt_read		=> "/bu/bushi/BURAT/bushido/remoteshell/+/evt/read",
+	:remoteshell_evt_write	=> "/bu/bushi/BURAT/bushido/remoteshell/+/evt/write",
+	:remoteshell_evt_error	=> "/bu/bushi/BURAT/bushido/remoteshell/+/evt/error",
+	:filerw									=> "/bu/bushi/BURAT/bushido/filerw/+",
+	:filerw_cmd_open				=> "/bu/bushi/BURAT/bushido/filerw/+/cmd/open",
+	:filerw_cmd_close				=> "/bu/bushi/BURAT/bushido/filerw/+/cmd/close",
+	:filerw_cmd_read				=> "/bu/bushi/BURAT/bushido/filerw/+/cmd/read",
+	:filerw_cmd_write				=> "/bu/bushi/BURAT/bushido/filerw/+/cmd/write",
+	:filerw_evt_read				=> "/bu/bushi/BURAT/bushido/filerw/+/evt/read",
+	:filerw_evt_write				=> "/bu/bushi/BURAT/bushido/filerw/+/evt/write",
+	:filerw_evt_error				=> "/bu/bushi/BURAT/bushido/filerw/+/evt/error"
 })
 
 # remoteshell commands
@@ -170,7 +170,7 @@ burat.bushido[:filerw].on :read do |id, data|
 end
 
 burat.bushido[:filerw].on :write do |id, length|
-  puts "filerw.read #{id} #{length}"
+  puts "filerw.write #{id} #{length}"
 	packet = {
 		:id			=> id,
 		:length		=> length
@@ -208,9 +208,9 @@ end
 
 Thread.new {
 	loop do
+		sleep burat.internals[:mqtt].keep_alive
 		if burat.internals[:mqtt].connected? then
 			burat.internals[:mqtt].publish(burat.topics[:nil], nil, false, 2)
-			sleep burat.internals[:mqtt].keep_alive
 		end
 	end
 }

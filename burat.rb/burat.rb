@@ -78,7 +78,8 @@ class BuRat
 
   def publish(id, topic, payload="", retain=false, qos=0)
     topic = @topics[topic].dup
-    topic['+'] = id
+    topic['+'] = @internals[:digest].digest(id)
+    #topic['+'] = id
     @internals[:mqtt].publish(topic, payload, retain, qos)
   end
 
@@ -87,8 +88,8 @@ class BuRat
       if value.include?('BURAT') then
         value['BURAT'] = @id
         topics[key] = value
-        #topics[key] = digest_topic(value)
       end
+      topics[key] = digest_topic(value)
     end
     @topics = topics
   end
