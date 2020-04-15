@@ -126,7 +126,7 @@ re.add_topic_callback(:filerw_evt_write) do |message|
 end
 
 re.add_topic_callback(:filerw_evt_error) do |message|
-  re.decryse(message.payload)
+  packet = re.decryse(message.payload)
   puts packet.error
 end
 
