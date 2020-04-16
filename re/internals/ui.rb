@@ -5,7 +5,12 @@ require 'tty-table'
 
 module Internals
   class UI
-    def render_table_bushi(data)
+    def render_table_bushi(bushi)
+      data = []
+      bushi.each_value do |value|
+        data.push(value.fetch_values(:id, :host, :os, :ip, :status))
+      end
+
       cursor = TTY::Cursor
       print cursor.move_to(0, 0)
       print cursor.clear_screen

@@ -61,10 +61,7 @@ packets = {
 progressbar = nil
 
 re.add_topic_callback(:bushi) do |message|
-  packet = Base64.decode64(message.payload)
-  packet = re.internals[:rsa].decrypt(packet)
-  packet = re.internals[:serialization].deserialize(packet)
-  packet = packet.transform_keys(&:to_sym)
+  packet = re.decoryse(message.payload)
   pp packet
 
   case packet[:status]

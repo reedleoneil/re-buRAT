@@ -1,3 +1,4 @@
+require 'base64'
 require 'ostruct'
 require 'paho-mqtt'
 
@@ -31,6 +32,13 @@ class Re
     data = @internals[:aes].decrypt(data)
     data = @internals[:serialization].deserialize(data)
     return OpenStruct.new(data)
+  end
+
+  def decoryse(data)
+    data = Base64.decode64(data)
+    data = @internals[:rsa].decrypt(data)
+    data = @internals[:serialization].deserialize(data)
+    return data.transform_keys(&:to_sym)
   end
 
   def add_topic_callback(topic, &block)

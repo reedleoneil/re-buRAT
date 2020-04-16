@@ -1,4 +1,3 @@
-require 'base64'
 require 'optparse'
 require 'paho-mqtt'
 
@@ -30,20 +29,11 @@ re.add_topics({
 
 re.add_topic_callback(:bushi) do |message|
   begin
-    packet = Base64.decode64(message.payload)
-    packet = re.internals[:rsa].decrypt(packet)
-    packet = re.internals[:serialization].deserialize(packet)
-    packet = packet.transform_keys(&:to_sym)
-
+    packet = re.decoryse(message.payload)
     bushi[packet[:id]] = packet
-
-		data = []
-		bushi.each_value do |value|
-			data.push(value.fetch_values(:id, :host, :os, :ip, :status))
-		end
-		re.internals[:ui].render_table_bushi(data)
+		re.internals[:ui].render_table_bushi(bushi)
   rescue StandardError => error
-    puts error.backtrace
+    puts error.full_message
   end
 end
 
@@ -68,7 +58,6 @@ loop do
 		re.internals[:mqtt].blocking = true
 		re.internals[:mqtt].reconnect_limit = 3
 		re.internals[:mqtt].reconnect_delay = 60
-		re.internals[:mqtt].connect()
-		re.internals[:mqtt].subscribe([re.topics[:bushi], 2])
+		re.connect()
 	end
 end
