@@ -2,6 +2,12 @@ require_relative 'burat'
 
 burat = BuRat.new
 
+params = {}
+burat.internals[:optparse].program_name = "bushi"
+burat.internals[:optparse].version = "0.0.1"
+burat.internals[:optparse].on('-h', '--help', 'display help')
+burat.internals[:optparse].parse!(into: params)
+
 burat.internals[:rsa].config({
 :encoded_key => '-----BEGIN PUBLIC KEY-----
 MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA3UEh+HOkcBDCuJYRNgRb
@@ -199,7 +205,7 @@ loop do
 		burat.internals[:mqtt].loop_read
 		burat.internals[:mqtt].loop_write
 	rescue StandardError => error
-		puts error
+		puts error.full_message
 		burat.internals[:mqtt].host = 'localhost'
 		burat.internals[:mqtt].port = 1883
 		burat.internals[:mqtt].persistent = true

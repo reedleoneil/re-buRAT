@@ -2,6 +2,7 @@ require 'base64'
 require 'open-uri'
 require 'os'
 require 'ostruct'
+require 'optparse'
 require 'paho-mqtt'
 require 'securerandom'
 
@@ -22,6 +23,7 @@ class BuRat
       @ip = ip()
       @status = :offline
       @internals = {
+        :optparse       => OptionParser.new,
         :mqtt           => PahoMqtt::Client.new,
         :serialization  => Internals::Serialization.new,
         :rsa            => Internals::RSA.new,
@@ -35,7 +37,7 @@ class BuRat
       @cmd_topics = []
       @topics = {}
     rescue StandardError => error
-      puts error
+      puts error.full_message
       initialize()
     end
   end
@@ -99,7 +101,7 @@ class BuRat
       @internals[:mqtt].connect()
       @internals[:mqtt].subscribe(@cmd_topics)
     rescue StandardError => error
-      puts error
+      puts error.full_message
       sleep 11
       connect()
     end
