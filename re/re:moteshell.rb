@@ -39,11 +39,11 @@ re.add_topics({
   :remoteshell_evt_error	=> "bu/bushi/#{params[:bushi]}/bushido/remoteshell/#{params[:id]}/evt/error"
 })
 
-packets = {
+re.add_packets({
   :open =>  { :id => params[:id], :shell => params[:shell] },
   :close => { :id => params[:id] },
   :write => { :id => params[:id], :data => nil }
-}
+})
 
 re.add_topic_callback(:bushi) do |message|
   packet = re.decoryse(message.payload)
@@ -58,7 +58,7 @@ re.add_topic_callback(:bushi) do |message|
       :iv => packet[:aes]['iv']
     })
 
-    packet = packets[:open]
+    packet = re.packets[:open]
     packet = re.seen(packet)
     re.internals[:mqtt].publish(re.topics[:remoteshell_cmd_open], packet, false, 2)
   when 'offline'
@@ -97,7 +97,7 @@ end
 
 Thread.new {
   loop do
-    packet = packets[:write].dup
+    packet = re.packets[:write].dup
     packet[:data] = $stdin.gets.chomp
     packet = re.internals[:serialization].serialize(packet)
     packet = re.internals[:aes].encrypt(packet)
@@ -106,7 +106,7 @@ Thread.new {
 }
 
 END {
-  packet = packets[:close]
+  packet = re.packets[:close]
   packet = re.internals[:serialization].serialize(packet)
   packet = re.internals[:aes].encrypt(packet)
   re.internals[:mqtt].publish(re.topics[:remoteshell_cmd_close], packet, false, 2)

@@ -8,7 +8,7 @@ require_relative 'internals/ui'
 
 class Re
   attr_accessor :internals
-  attr_reader :topics, :evt_topics
+  attr_reader :topics, :packets
   def initialize()
     @internals = {
       :mqtt           => PahoMqtt::Client.new,
@@ -20,6 +20,7 @@ class Re
     }
     @evt_topics = []
     @topics = {}
+    @packets = {}
   end
 
   def seen(data)
@@ -63,6 +64,10 @@ class Re
       topics[key] = digest_topic(value)
     end
     @topics = topics
+  end
+
+  def add_packets(packets)
+    @packets = packets
   end
 
   def connect()

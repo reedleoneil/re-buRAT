@@ -46,7 +46,7 @@ re.add_topics({
   :filerw_evt_error				=> "bu/bushi/#{params[:bushi]}/bushido/filerw/#{params[:id]}/evt/error"
 })
 
-packets = {
+re.add_packets({
   :open =>  {
     :id => params[:id],
     :path => params[:mode] == 'read' ? params[:source] : params[:destination],
@@ -56,7 +56,7 @@ packets = {
   :close => { :id => params[:id] },
   :read => { :id => params[:id], :length => nil },
   :write => { :id => params[:id], :data => nil }
-}
+})
 
 progressbar = nil
 
@@ -73,7 +73,7 @@ re.add_topic_callback(:bushi) do |message|
       :iv => packet[:aes]['iv']
     })
 
-    packet = packets[:open]
+    packet = re.packets[:open]
     packet = re.seen(packet)
     re.internals[:mqtt].publish(re.topics[:filerw_cmd_open], packet, false, 2)
   when 'offline'
@@ -94,12 +94,12 @@ re.add_topic_callback(:filerw) do |message|
     case file.mode
     when 'read'
       topic = re.topics[:filerw_cmd_read]
-      packet = packets[:read]
+      packet = re.packets[:read]
       remaining_bytesio = file.size.to_i - file.bytesio.to_i
       packet[:length] = remaining_bytesio >= params[:rate] ? params[:rate] : remaining_bytesio
     when 'write'
       topic = re.topics[:filerw_cmd_write]
-      packet = packets[:write]
+      packet = re.packets[:write]
       packet[:data] = File.binread(params[:source], params[:rate], file.bytesio.to_i)
     end
 
@@ -133,7 +133,7 @@ re.internals[:mqtt].on_connack do
 end
 
 END {
-  packet = packets[:close]
+  packet = re.packets[:close]
   packet = re.seen(packet)
   re.internals[:mqtt].publish(re.topics[:filerw_cmd_close], packet, false, 2)
   loop do
