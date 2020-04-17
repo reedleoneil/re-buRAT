@@ -1,9 +1,5 @@
-require 'base64'
-require 'optparse'
-require 'paho-mqtt'
 require 'pp'
 require 'securerandom'
-require 'tty-reader'
 
 require_relative 're'
 
@@ -11,20 +7,20 @@ params = {
   :id => SecureRandom.hex(2),
   :rate => 1024
 }
-
-OptionParser.new do |opts|
-  opts.program_name = "re:filerw"
-  opts.version = "0.0.1"
-  opts.on('-b', '--bushi',        '=ID',              'target bushi')
-  opts.on('-i', '--id',           '=ID',              'id of remote shell')
-  opts.on('-m', '--mode',         '=MODE',            'file mode read | write')
-  opts.on('-s', '--source',       '=PATH',            'remote file path to read from')
-  opts.on('-d', '--destination',  '=PATH',            'local file path to read to')
-  opts.on('-z', '--size',         '=SIZE', Integer,   'file size to read or write')
-  opts.on('-r', '--rate',         '=BITS', Integer,   'transfer rate default: 1024')
-end.parse!(into: params)
+progressbar = nil
 
 re = Re.new
+
+re.internals[:optparse].program_name = "re:filerw"
+re.internals[:optparse].version = "0.0.1"
+re.internals[:optparse].on('-b', '--bushi',        '=ID',              'target bushi')
+re.internals[:optparse].on('-i', '--id',           '=ID',              'id of remote shell')
+re.internals[:optparse].on('-m', '--mode',         '=MODE',            'file mode read | write')
+re.internals[:optparse].on('-s', '--source',       '=PATH',            'remote file path to read from')
+re.internals[:optparse].on('-d', '--destination',  '=PATH',            'local file path to read to')
+re.internals[:optparse].on('-z', '--size',         '=SIZE', Integer,   'file size to read or write')
+re.internals[:optparse].on('-r', '--rate',         '=BITS', Integer,   'transfer rate default: 1024')
+re.internals[:optparse].parse!(into: params)
 
 re.internals[:rsa].config({
   :encoded_key => File.read('bu.key')
@@ -58,8 +54,6 @@ re.add_packets({
   :write => { :id => params[:id], :data => nil }
 })
 
-progressbar = nil
-
 re.add_topic_callback(:bushi) do |message|
   packet = re.decoryse(message.payload)
   pp packet
@@ -82,10 +76,7 @@ re.add_topic_callback(:bushi) do |message|
 end
 
 re.add_topic_callback(:filerw) do |message|
-  case message.payload
-  when ''
-    exit
-  else
+  if message.payload != '' then
     file = re.decryse(message.payload)
     #pp file
 
@@ -107,6 +98,8 @@ re.add_topic_callback(:filerw) do |message|
       packet = re.seen(packet)
       re.internals[:mqtt].publish(topic, packet, false, 2)
     end
+  else
+    exit
   end
 end
 
@@ -129,7 +122,7 @@ end
 
 re.internals[:mqtt].on_connack do
   re.internals[:ui].render_banner('re:FILERW')
-  progressbar = re.internals[:ui].progressbar(params[:size])
+  progressbar = re.internals[:ui].progressbar_filerw(params[:size])
 end
 
 END {

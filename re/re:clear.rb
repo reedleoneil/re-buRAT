@@ -1,27 +1,33 @@
-require 'optparse'
-require 'paho-mqtt'
-
 require_relative 're'
 
 params = {
-	:topic => 'bu/#'
+	:topic => 'bu/#',
+	:host => 'localhost',
+	:port => 1883
 }
 
-OptionParser.new do |opts|
-  opts.program_name = "re:clear"
-  opts.version = "0.0.1"
-	opts.on('-t', '--topic', '=TOPIC', 'topic to be cleared')
-end.parse!(into: params)
-
 re = Re.new
+
+re.internals[:optparse].program_name = "re:clear"
+re.internals[:optparse].version = "0.0.1"
+re.internals[:optparse].on('-t', '--topic', '=TOPIC', 'topic to be cleared')
+re.internals[:optparse].on('-h', '--host', 	'=HOST', 'host default localhost')
+re.internals[:optparse].on('-p', '--port', 	'=PORT', 'port default 1883')
+re.internals[:optparse].parse!(into: params)
 
 re.internals[:digest].config({
 	:digest => 'md5'
 })
 
-re.internals[:mqtt].on_message do |message|
-  puts message.topic
-  re.internals[:mqtt].publish(message.topic, nil, true, 2)
+re.add_topics({
+	:topic => params[:topic]
+})
+
+re.add_topic_callback(:topic) do |message|
+	if message.payload != '' then
+	  puts message.topic
+	  re.internals[:mqtt].publish(message.topic, nil, true, 2)
+	end
 end
 
 loop do
@@ -29,15 +35,13 @@ loop do
 		re.internals[:mqtt].loop_read
 		re.internals[:mqtt].loop_write
 	rescue StandardError => error
-		puts error
-		re.internals[:mqtt].host = 'localhost'
-		re.internals[:mqtt].port = 1883
+		puts error.full_message
+		re.internals[:mqtt].host = params[:host]
+		re.internals[:mqtt].port = params[:port]
 		re.internals[:mqtt].persistent = true
 		re.internals[:mqtt].blocking = true
 		re.internals[:mqtt].reconnect_limit = 3
 		re.internals[:mqtt].reconnect_delay = 60
-		re.internals[:mqtt].connect()
-		re.internals[:mqtt].subscribe([re.digest_topic(params[:topic]), 2])
-		#re.internals[:mqtt].subscribe([params[:topic], 2])
+		re.connect()
 	end
 end

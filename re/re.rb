@@ -1,4 +1,5 @@
 require 'base64'
+require 'optparse'
 require 'ostruct'
 require 'paho-mqtt'
 
@@ -11,6 +12,7 @@ class Re
   attr_reader :topics, :packets
   def initialize()
     @internals = {
+      :optparse       => OptionParser.new,
       :mqtt           => PahoMqtt::Client.new,
       :serialization  => Internals::Serialization.new,
       :rsa            => Internals::RSA.new,
@@ -57,10 +59,6 @@ class Re
 
   def add_topics(topics)
     topics.each do |key, value|
-      if value.include?('BURAT') then
-        value['BURAT'] = @id
-        topics[key] = value
-      end
       topics[key] = digest_topic(value)
     end
     @topics = topics
@@ -81,6 +79,7 @@ class Re
     end
   end
 
+  private
   def digest_topic(topic)
     levels = topic.split('/')
   	levels.each_with_index do |level, index|

@@ -25,7 +25,7 @@ module Internals
       puts font.write(banner)
     end
 
-    def progressbar(total)
+    def progressbar_filerw(total)
       TTY::ProgressBar.new(
         "ETA :eta [:bar] :percent :current_byte/:total_byte :byte_rate/s :elapsed",
         total: total,

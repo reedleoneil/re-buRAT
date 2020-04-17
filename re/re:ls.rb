@@ -1,25 +1,20 @@
-require 'optparse'
-require 'paho-mqtt'
-
 require_relative 're'
 
 params = {}
-
-OptionParser.new do |opts|
-  opts.program_name = "re:ls"
-  opts.version = "0.0.1"
-end.parse!(into: params)
-
 bushi = {}
 
 re = Re.new
 
-re.internals[:digest].config({
-	:digest => 'md5'
-})
+re.internals[:optparse].program_name = "re:ls"
+re.internals[:optparse].version = "0.0.1"
+re.internals[:optparse].parse!(into: params)
 
 re.internals[:rsa].config({
   :encoded_key => File.read('bu.key')
+})
+
+re.internals[:digest].config({
+	:digest => 'md5'
 })
 
 re.add_topics({
@@ -51,7 +46,7 @@ loop do
 		re.internals[:mqtt].loop_read
 		re.internals[:mqtt].loop_write
 	rescue StandardError => error
-		puts error
+		puts error.full_message
 		re.internals[:mqtt].host = 'localhost'
 		re.internals[:mqtt].port = 1883
 		re.internals[:mqtt].persistent = true

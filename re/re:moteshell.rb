@@ -1,6 +1,3 @@
-require 'base64'
-require 'optparse'
-require 'paho-mqtt'
 require 'pp'
 require 'securerandom'
 
@@ -10,15 +7,14 @@ params = {
   :id => SecureRandom.hex(2)
 }
 
-OptionParser.new do |opts|
-  opts.program_name = "re:moteshell"
-  opts.version = "0.0.1"
-  opts.on('-b', '--bushi',  '=BUSHI',   'target bushi')
-  opts.on('-i', '--id',     '=ID',      'id of remote shell')
-  opts.on('-s', '--shell',  '=SHELL',      'shell to spawn')
-end.parse!(into: params)
-
 re = Re.new
+
+re.internals[:optparse].program_name = "re:moteshell"
+re.internals[:optparse].version = "0.0.1"
+re.internals[:optparse].on('-b', '--bushi',  '=BUSHI',  'target bushi')
+re.internals[:optparse].on('-i', '--id',     '=ID',     'id of remote shell')
+re.internals[:optparse].on('-s', '--shell',  '=SHELL',  'shell to spawn')
+re.internals[:optparse].parse!(into: params)
 
 re.internals[:rsa].config({
   :encoded_key => File.read('bu.key')
@@ -67,12 +63,11 @@ re.add_topic_callback(:bushi) do |message|
 end
 
 re.add_topic_callback(:remoteshell) do |message|
-  case message.payload
-  when ''
-    exit
-  else
+  if message.payload != '' then
     packet = re.decryse(message.payload)
     pp packet
+  else
+    exit
   end
 end
 
