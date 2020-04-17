@@ -138,8 +138,7 @@ end
 
 burat.bushido[:filerw].on :close do |id|
 	puts "filerw.close #{id}"
-	:filerw
-	burat.publish(id, topic, nil, true, 2)
+	burat.publish(id, :filerw, nil, true, 2)
 end
 
 burat.bushido[:filerw].on :read do |id, data|
