@@ -1,3 +1,4 @@
+require 'json'
 require 'pp'
 require 'securerandom'
 
@@ -17,7 +18,7 @@ re.internals[:optparse].on('-s', '--shell',  '=SHELL',  'shell to spawn')
 re.internals[:optparse].parse!(into: params)
 
 re.internals[:rsa].config({
-  :encoded_key => File.read('bu.key')
+  :encoded_key => File.read('re.key')
 })
 
 re.internals[:digest].config({
@@ -117,8 +118,9 @@ loop do
 		re.internals[:mqtt].loop_write
 	rescue StandardError => error
 		puts error
-		re.internals[:mqtt].host = 'localhost'
-		re.internals[:mqtt].port = 1883
+    config = JSON.parse(File.read('re.conf'))
+		re.internals[:mqtt].host = config['host']
+		re.internals[:mqtt].port = config['port']
 		re.internals[:mqtt].persistent = true
 		re.internals[:mqtt].blocking = true
 		re.internals[:mqtt].reconnect_limit = 3

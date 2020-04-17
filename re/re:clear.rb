@@ -1,9 +1,9 @@
+require 'json'
+
 require_relative 're'
 
 params = {
-	:topic => 'bu/#',
-	:host => 'localhost',
-	:port => 1883
+	:topic => 'bu/#'
 }
 
 re = Re.new
@@ -11,8 +11,6 @@ re = Re.new
 re.internals[:optparse].program_name = "re:clear"
 re.internals[:optparse].version = "0.0.1"
 re.internals[:optparse].on('-t', '--topic', '=TOPIC', 'topic to be cleared')
-re.internals[:optparse].on('-h', '--host', 	'=HOST', 'host default localhost')
-re.internals[:optparse].on('-p', '--port', 	'=PORT', 'port default 1883')
 re.internals[:optparse].parse!(into: params)
 
 re.internals[:digest].config({
@@ -36,8 +34,9 @@ loop do
 		re.internals[:mqtt].loop_write
 	rescue StandardError => error
 		puts error.full_message
-		re.internals[:mqtt].host = params[:host]
-		re.internals[:mqtt].port = params[:port]
+		config = JSON.parse(File.read('re.conf'))
+		re.internals[:mqtt].host = config['host']
+		re.internals[:mqtt].port = config['port']
 		re.internals[:mqtt].persistent = true
 		re.internals[:mqtt].blocking = true
 		re.internals[:mqtt].reconnect_limit = 3
