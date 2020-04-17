@@ -5,7 +5,7 @@ require_relative 're'
 
 params = {
   :id => SecureRandom.hex(2),
-  :rate => 1024
+  :rate => 10240
 }
 progressbar = nil
 
