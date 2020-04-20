@@ -1,4 +1,4 @@
-package bushido
+package remoteshell
 
 import(
   	"os/exec"
@@ -37,6 +37,14 @@ func NewRemoteShell(id string, shell string) *remoteShell {
   r.onRead = func(data string) { fmt.Println(data) }
   r.onError = func(error string) { fmt.Println(error) }
   return r
+}
+
+func (r *remoteShell) Id() string {
+  return r.id
+}
+
+func (r *remoteShell) Shell() string {
+  return r.shell
 }
 
 func (r *remoteShell) OnRead(callback func(data string)) {
