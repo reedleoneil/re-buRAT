@@ -74,12 +74,15 @@ func (r *buRemoteShell) Open(id string, shell string) {
 }
 
 func (r *buRemoteShell) Close(id string) {
+  x := 0
   for i := range r.remoteShells {
 		if r.remoteShells[i].Id() == id {
 			r.remoteShells[i].Close()
+      x = i
 			r.onClose(id)
 		}
 	}
+  r.remoteShells = append(r.remoteShells[:x], r.remoteShells[x+1:]...)
 }
 
 func (r *buRemoteShell) Write(id string, data string) {
