@@ -17,11 +17,11 @@ type bufilerw struct {
 
 type BuFileRW interface {
   Files() []filerw.File
-  OnOpen(id string)
-  OnClose(id string)
-  OnRead(id string, data []byte)
-  OnWrite(id string, length int)
-  OnError(id string, error string)
+  OnOpen(func (id string))
+  OnClose(func (id string))
+  OnRead(func (id string, data []byte))
+  OnWrite(func (id string, length int))
+  OnError(func (id string, error string))
   Open(id string, path string, mode string, size int)
   Close(id string)
   Read(id string, length int)
