@@ -12,11 +12,11 @@ type aes struct {
 }
 
 type AES interface {
-  Key()     []byte
-  Iv()      []byte
-  Config()
-  Encrypt() []byte
-  Decrypt() []byte
+  Key()                         []byte
+  Iv()                          []byte
+  Config(key []byte, iv []byte)
+  Encrypt(data []byte)          []byte
+  Decrypt(data []byte)          []byte
 }
 
 func NewAES() *aes {
