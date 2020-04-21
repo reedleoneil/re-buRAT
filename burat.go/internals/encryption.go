@@ -13,7 +13,8 @@ type rsa struct {
 }
 
 type RSA interface {
-
+  Config(encodedKey string)
+  Encrypt(data []byte) []byte
 }
 
 func NewRSA() *rsa {
