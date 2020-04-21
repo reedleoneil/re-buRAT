@@ -36,6 +36,8 @@ func (f *file) Id() string { return f.id }
 
 func (f *file) Path() string { return f.path }
 
+func (f *file) Mode() string { return f.mode }
+
 func (f *file) Size() int { return f.size }
 
 func (f *file) BytesIO() int { return f.bytesio }
