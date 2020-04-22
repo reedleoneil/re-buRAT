@@ -140,7 +140,7 @@ func (b *buRAT) AddTopicCallback(topic string, block func (client mqtt.Client, m
 
 func (b *buRAT) Publish(id string, topic string, qos byte, retain bool, payload []byte) {
   topic = b._topics[topic]
-  strings.Replace(topic, "+", b._internals.Digest.Digest(id), -1)
+  topic = strings.Replace(topic, "+", b._internals.Digest.Digest(id), -1)
   b._internals.Mqtt.Publish(topic, qos, retain, payload)
 }
 
