@@ -107,5 +107,5 @@ func (r *remoteShell) Close() {
 }
 
 func (r *remoteShell) Write(data string) {
-  io.WriteString(r.stdin, data)
+  io.WriteString(r.stdin, data + "\n")
 }
