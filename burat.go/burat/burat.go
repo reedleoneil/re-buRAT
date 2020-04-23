@@ -206,9 +206,9 @@ func (b *buRAT) MqttConfig(server string,) {
   opts.AddBroker(server)
   opts.SetOnConnectHandler(func (client mqtt.Client) {
     b.status = "online"
-    client.Publish(b._topics["bushi"], 2, false, b.Profile())
+    client.Publish(b._topics["bushi"], 2, true, b.Profile())
   })
-  opts.SetWill(b._topics["bushi"], b.Profile(), 2, false)
+  opts.SetWill(b._topics["bushi"], b.Profile(), 2, true)
   b._internals.Mqtt = mqtt.NewClient(opts)
 }
 
