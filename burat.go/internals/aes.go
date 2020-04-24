@@ -24,13 +24,9 @@ func NewAES() *aes {
 	return a
 }
 
-func (a *aes) Key() []byte {
-  return a.key
-}
+func (a *aes) Key() []byte { return a.key }
 
-func (a *aes) Iv() []byte {
-  return a.iv
-}
+func (a *aes) Iv() []byte { return a.iv }
 
 func (a *aes) Config(key []byte, iv []byte) {
   block, _ := cryptoaes.NewCipher(key)

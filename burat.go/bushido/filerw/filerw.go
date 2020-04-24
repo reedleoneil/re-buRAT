@@ -18,8 +18,8 @@ type File interface {
   Mode()              string
   Size()              int
   BytesIO()           int
-  Read(length int)    []byte
-  Write(data []byte) int
+  Read(length int)    ([]byte, error)
+  Write(data []byte)  (int, error)
 }
 
 func NewFile(id string, path string, mode string, size int) *file {
@@ -42,19 +42,21 @@ func (f *file) Size() int { return f.size }
 
 func (f *file) BytesIO() int { return f.bytesio }
 
-func (f *file) Read(length int) []byte {
+func (f *file) Read(length int) ([]byte, error) {
   data := make([]byte, length)
-	file, _ := os.OpenFile(f.path, os.O_RDWR|os.O_CREATE, 0755)
+	file, err := os.OpenFile(f.path, os.O_RDWR|os.O_CREATE, 0755)
+  if err != nil { return nil, err }
 	file.ReadAt(data, int64(f.bytesio))
-	file.Close()
+  if err := file.Close(); err != nil { return nil, err }
   f.bytesio += length
-	return data
+	return data, nil
 }
 
-func (f *file) Write(data []byte) int {
-  file, _ := os.OpenFile(f.path, os.O_RDWR|os.O_CREATE, 0755)
-	length, _ := file.WriteAt(data, int64(f.bytesio))
-	file.Close()
+func (f *file) Write(data []byte) (int, error) {
+  file, err := os.OpenFile(f.path, os.O_RDWR|os.O_CREATE, 0755)
+  if err != nil { return 0, err }
+	length, err := file.WriteAt(data, int64(f.bytesio))
+	if err := file.Close(); err != nil { return 0, err }
 	f.bytesio += length
-  return length
+  return length, nil
 }

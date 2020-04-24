@@ -1,9 +1,9 @@
 package internals
 
 import(
+  "encoding/hex"
   "crypto/md5"
   "io"
-  "encoding/hex"
 )
 
 type digest struct {

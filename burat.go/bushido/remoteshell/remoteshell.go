@@ -1,18 +1,18 @@
 package remoteshell
 
 import(
-  	"os/exec"
-    "syscall"
     "bufio"
     "io"
     "fmt"
+  	"os/exec"
+    "syscall"
 )
 
 type remoteShell struct {
   id        string
   shell     string
   onRead    func(data string)
-  onError   func(error string)
+  onError   func(error error)
   stdin	    io.WriteCloser
   stdout 	  io.ReadCloser
   stderr    io.ReadCloser
@@ -23,37 +23,28 @@ type RemoteShell interface {
   Id()      string
   Shell()   string
   OnRead(callback func(data string))
-  OnError(callback func(data string))
+  OnError(callback func(data error))
   Open()
   Close()
   Write(data string)
 }
 
 func NewRemoteShell(id string, shell string) *remoteShell {
-  r := &remoteShell {
-    id: id,
-    shell: shell,
-  }
+  r := &remoteShell {}
+  r.id = id
+  r.shell = shell
   r.onRead = func(data string) { fmt.Println(data) }
-  r.onError = func(error string) { fmt.Println(error) }
+  r.onError = func(error error) { fmt.Println(error) }
   return r
 }
 
-func (r *remoteShell) Id() string {
-  return r.id
-}
+func (r *remoteShell) Id() string { return r.id }
 
-func (r *remoteShell) Shell() string {
-  return r.shell
-}
+func (r *remoteShell) Shell() string { return r.shell }
 
-func (r *remoteShell) OnRead(callback func(data string)) {
-  r.onRead = callback
-}
+func (r *remoteShell) OnRead(callback func(data string)) { r.onRead = callback }
 
-func (r *remoteShell) OnError(callback func(error string)) {
-  r.onError = callback
-}
+func (r *remoteShell) OnError(callback func(error error)) { r.onError = callback }
 
 func (r *remoteShell) Open() {
   cmd := exec.Command(r.shell)
@@ -61,17 +52,17 @@ func (r *remoteShell) Open() {
 
 	cmdInReader, err := cmd.StdinPipe()
 	if err != nil {
-		r.onError(err.Error())
+		r.onError(err)
 	}
 
 	cmdOutReader, err := cmd.StdoutPipe()
 	if err != nil {
-		r.onError(err.Error())
+		r.onError(err)
 	}
 
 	cmdErrReader, err := cmd.StderrPipe()
 	if err != nil {
-		r.onError(err.Error())
+		r.onError(err)
 	}
 
 	outScanner := bufio.NewScanner(cmdOutReader)
@@ -84,13 +75,13 @@ func (r *remoteShell) Open() {
 	errScanner := bufio.NewScanner(cmdErrReader)
 	go func() {
 		for errScanner.Scan() {
-			r.onError(errScanner.Text())
+			r.onRead(errScanner.Text())
 		}
 	}()
 
 	err = cmd.Start()
 	if err != nil {
-		r.onError(err.Error())
+		r.onError(err)
 	}
 
   r.stdin = cmdInReader

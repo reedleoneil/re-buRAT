@@ -1,8 +1,8 @@
 package internals
 
 import(
+  cryptorsa "crypto/rsa"
   "crypto/rand"
-	cryptorsa "crypto/rsa"
 	"crypto/x509"
   "encoding/pem"
   "errors"

