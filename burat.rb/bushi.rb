@@ -199,22 +199,25 @@ Thread.new {
 	end
 }
 
+burat.internals[:mqtt].host = 'test.mosquitto.org'
+burat.internals[:mqtt].port = 1883
+burat.internals[:mqtt].persistent = true
+burat.internals[:mqtt].blocking = true
+burat.internals[:mqtt].will_topic = burat.topics[:bushi]
+burat.internals[:mqtt].will_payload = burat.profile
+burat.internals[:mqtt].will_qos = 2
+burat.internals[:mqtt].will_retain = true
+burat.connect()
+
 loop do
 	begin
-		burat.internals[:mqtt].loop_read
-		burat.internals[:mqtt].loop_write
+		if burat.internals[:mqtt].connected? then
+			burat.internals[:mqtt].mqtt_loop
+		else
+			burat.connect()
+		end
 	rescue StandardError => error
 		puts error.full_message
-		burat.internals[:mqtt].host = 'localhost'
-		burat.internals[:mqtt].port = 1883
-		burat.internals[:mqtt].persistent = true
-		burat.internals[:mqtt].blocking = true
-		burat.internals[:mqtt].reconnect_limit = 3
-		burat.internals[:mqtt].reconnect_delay = 60
-		burat.internals[:mqtt].will_topic = burat.topics[:bushi]
-		burat.internals[:mqtt].will_payload = burat.profile
-		burat.internals[:mqtt].will_qos = 2
-		burat.internals[:mqtt].will_retain = true
 		burat.connect()
 	end
 end
