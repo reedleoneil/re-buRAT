@@ -3,6 +3,8 @@ package internals
 import(
   cryptoaes "crypto/aes"
 	"crypto/cipher"
+	"crypto/rand"
+  "io"
 )
 
 type aes struct {
@@ -14,26 +16,33 @@ type aes struct {
 type AES interface {
   Key()                         []byte
   Iv()                          []byte
-  Config(key []byte, iv []byte)
   Encrypt(data []byte)          []byte
   Decrypt(data []byte)          []byte
 }
 
 func NewAES() *aes {
+  key := make([]byte, 16)
+	if _, err := io.ReadFull(rand.Reader, key); err != nil {
+		panic(err)
+	}
+
+	iv := make([]byte, 16)
+	if _, err := io.ReadFull(rand.Reader, iv); err != nil {
+		panic(err)
+	}
+
+  block, _ := cryptoaes.NewCipher(key)
+
 	a := &aes {}
+  a.block = block
+  a.key = key
+  a.iv = iv
 	return a
 }
 
 func (a *aes) Key() []byte { return a.key }
 
 func (a *aes) Iv() []byte { return a.iv }
-
-func (a *aes) Config(key []byte, iv []byte) {
-  block, _ := cryptoaes.NewCipher(key)
-  a.block = block
-  a.key = key
-  a.iv = iv
-}
 
 func (a *aes) Encrypt(data []byte) []byte {
   encryptedData := make([]byte, len(data))

