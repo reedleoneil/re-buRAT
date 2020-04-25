@@ -184,12 +184,6 @@ burat.bushido[:filerw].on :error do |id, error|
 	burat.publish(id, :filerw_evt_error, packet, false, 2)
 end
 
-burat.internals[:mqtt].on_connack do
-	burat.status = :online
-	packet = burat.profile
-	burat.internals[:mqtt].publish(burat.topics[:bushi], packet, true, 2)
-end
-
 Thread.new {
 	loop do
 		sleep burat.internals[:mqtt].keep_alive
@@ -199,25 +193,21 @@ Thread.new {
 	end
 }
 
-burat.internals[:mqtt].host = 'test.mosquitto.org'
-burat.internals[:mqtt].port = 1883
-burat.internals[:mqtt].persistent = true
-burat.internals[:mqtt].blocking = true
-burat.internals[:mqtt].will_topic = burat.topics[:bushi]
-burat.internals[:mqtt].will_payload = burat.profile
-burat.internals[:mqtt].will_qos = 2
-burat.internals[:mqtt].will_retain = true
-burat.connect()
-
 loop do
+	puts burat.connecting?
 	begin
 		if burat.internals[:mqtt].connected? then
 			burat.internals[:mqtt].mqtt_loop
 		else
-			burat.connect()
+			if !burat.connecting? then
+				burat.status = :offline
+				burat.connect()
+			end
 		end
 	rescue StandardError => error
 		puts error.full_message
-		burat.connect()
+		if !burat.connecting? then
+			burat.connect()
+		end
 	end
 end

@@ -20,7 +20,7 @@ class BuRat
       @id = id()
       @host = host()
       @os = os()
-      @ip = ip()
+      @ip = :unknown
       @status = :offline
       @internals = {
         :optparse       => OptionParser.new,
@@ -36,6 +36,7 @@ class BuRat
       }
       @cmd_topics = []
       @topics = {}
+      @connect_thread
     rescue StandardError => error
       puts error.full_message
       initialize()
@@ -97,14 +98,21 @@ class BuRat
   end
 
   def connect()
-    begin
-      @internals[:mqtt].connect()
-      @internals[:mqtt].subscribe(@cmd_topics)
-    rescue StandardError => error
-      puts error.full_message
-      sleep 11
-      connect()
+    @connect_thread = Thread.new do
+      begin
+        test()
+        @internals[:mqtt].connect()
+        @internals[:mqtt].subscribe(@cmd_topics)
+      rescue StandardError => error
+        puts error.full_message
+        sleep 11
+        connect()
+      end
     end
+  end
+
+  def connecting?
+    @connect_thread != nil && @connect_thread.status ? true : false
   end
 
   private
@@ -135,5 +143,21 @@ class BuRat
 
   def ip()
     open('http://whatismyip.akamai.com').read
+  end
+
+  def test()
+    @internals[:mqtt].on_connack do
+    	@status = :online
+    	packet = profile()
+    	@internals[:mqtt].publish(@topics[:bushi], packet, true, 2)
+    end
+    @internals[:mqtt].host = 'localhost'
+    @internals[:mqtt].port = 1883
+    @internals[:mqtt].persistent = true
+    @internals[:mqtt].blocking = true
+    @internals[:mqtt].will_topic = @topics[:bushi]
+    @internals[:mqtt].will_payload = profile()
+    @internals[:mqtt].will_qos = 2
+    @internals[:mqtt].will_retain = true
   end
 end
