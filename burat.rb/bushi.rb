@@ -184,20 +184,15 @@ burat.bushido[:filerw].on :error do |id, error|
 	burat.publish(id, :filerw_evt_error, packet, false, 2)
 end
 
-Thread.new {
-	loop do
-		sleep burat.internals[:mqtt].keep_alive
-		if burat.internals[:mqtt].connected? then
-			burat.internals[:mqtt].publish(burat.topics[:nil], nil, false, 2)
-		end
-	end
-}
-
+last_ping_time = Time.now
 loop do
-	puts burat.connecting?
 	begin
 		if burat.internals[:mqtt].connected? then
 			burat.internals[:mqtt].mqtt_loop
+			if last_ping_time <= Time.now - burat.internals[:mqtt].keep_alive then
+				burat.ping
+				last_ping_time = Time.now
+			end
 		else
 			if !burat.connecting? then
 				burat.status = :offline
@@ -207,6 +202,7 @@ loop do
 	rescue StandardError => error
 		puts error.full_message
 		if !burat.connecting? then
+			burat.status = :offline
 			burat.connect()
 		end
 	end

