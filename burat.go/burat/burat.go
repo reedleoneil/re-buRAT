@@ -7,16 +7,15 @@ import(
   "github.com/eclipse/paho.mqtt.golang"
 
   "crypto/rand"
+  "encoding/base64"
   "encoding/hex"
-
+  "fmt"
+  "io/ioutil"
   "runtime"
   "net/http"
-  "io/ioutil"
-  "strings"
-  "fmt"
-  "time"
-  "encoding/base64"
   "os/exec"
+  "strings"
+  "time"
 )
 
 type _profile struct {
@@ -198,11 +197,11 @@ func host() string {
 	case "linux":
     nodename, _ := exec.Command("uname", "-n").Output()
     user, _ := exec.Command("whoami").Output()
-    host := strings.TrimSuffix(string(nodename), "\n") + "\\" + strings.TrimSuffix(string(user), "\n")
+    host := strings.TrimSpace(string(nodename)) + "\\" + strings.TrimSpace(string(user))
     return host
   case "windows":
     host, _ := exec.Command("whoami").Output()
-    return strings.TrimSuffix(string(host), "\n")
+    return strings.TrimSpace(string(host))
 	default:
 		return ""
 	}
@@ -212,10 +211,10 @@ func os() string {
   switch os := runtime.GOOS; os {
 	case "linux":
     os, _ := exec.Command("uname", "-sr").Output()
-    return strings.TrimSuffix(string(os), "\n")
+    return strings.TrimSpace(string(os))
   case "windows":
-    os, _ := exec.Command("ver").Output()
-    return strings.TrimSuffix(string(os), "\n")
+    os, _ := exec.Command("cmd", "/c", "ver").Output()
+    return strings.TrimSpace(string(os))
 	default:
 		return os
 	}
