@@ -194,16 +194,10 @@ loop do
 				last_ping_time = Time.now
 			end
 		else
-			if !burat.connecting? then
-				burat.status = :offline
-				burat.connect()
-			end
+			burat.connect() if !burat.connecting?
 		end
 	rescue StandardError => error
 		puts error.full_message
-		if !burat.connecting? then
-			burat.status = :offline
-			burat.connect()
-		end
+			burat.connect() if !burat.connecting?
 	end
 end

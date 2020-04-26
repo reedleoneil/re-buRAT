@@ -12,8 +12,7 @@ require_relative 'bushido/filerw/bufilerw'
 require_relative 'bushido/remoteshell/buremoteshell'
 
 class BuRat
-  attr_reader :id, :host, :os, :ip, :internals, :bushido
-  attr_accessor :status
+  attr_reader :id, :host, :os, :ip, :stauts, :internals, :bushido
   def initialize()
     begin
       @id = id()
@@ -97,6 +96,7 @@ class BuRat
   end
 
   def connect()
+    @status = :offline
     @connect_thread = Thread.new do
       begin
         init_mqtt()
