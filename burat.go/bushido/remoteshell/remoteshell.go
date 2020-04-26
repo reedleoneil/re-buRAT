@@ -5,7 +5,8 @@ import(
     "io"
     "fmt"
   	"os/exec"
-    "syscall"
+    "runtime"
+    "strconv"
 )
 
 type remoteShell struct {
@@ -48,7 +49,6 @@ func (r *remoteShell) OnError(callback func(error error)) { r.onError = callback
 
 func (r *remoteShell) Open() {
   cmd := exec.Command(r.shell)
-	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 
 	cmdInReader, err := cmd.StdinPipe()
 	if err != nil {
@@ -91,10 +91,13 @@ func (r *remoteShell) Open() {
 }
 
 func (r *remoteShell) Close() {
-  pgid, err := syscall.Getpgid(r.cmd.Process.Pid)
-  if err == nil {
-      syscall.Kill(-pgid, syscall.SIGKILL)
-  }
+  switch os := runtime.GOOS; os {
+	case "linux":
+    exec.Command("pkill", "-P", strconv.Itoa(r.cmd.Process.Pid)).Run()
+  case "windows":
+    exec.Command("TASKKILL", "/T", "/F", "/PID", strconv.Itoa(r.cmd.Process.Pid)).Run()
+	}
+  r.cmd.Process.Kill()
 }
 
 func (r *remoteShell) Write(data string) {

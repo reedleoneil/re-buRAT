@@ -246,7 +246,7 @@ func (b *buRAT) connect() {
         fmt.Println(r)
         time.Sleep(11 * time.Second)
         b.Connect()
-      }
+    }
   }()
   b.initMqtt()
   if token := b._internals.Mqtt.Connect(); token.Wait() && token.Error() != nil {
