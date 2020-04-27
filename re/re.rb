@@ -23,6 +23,7 @@ class Re
     @evt_topics = []
     @topics = {}
     @packets = {}
+    @connect_thread
   end
 
   def seen(data)
@@ -69,14 +70,25 @@ class Re
   end
 
   def connect()
-    begin
-      @internals[:mqtt].connect()
-      @internals[:mqtt].subscribe(@evt_topics)
-    rescue StandardError => error
-      puts error.full_message
-      sleep 11
-      connect()
+    @connect_thread = Thread.new do
+      begin
+        init_mqtt()
+        @internals[:mqtt].connect()
+        @internals[:mqtt].subscribe(@evt_topics)
+      rescue StandardError => error
+        puts error.full_message
+        sleep 11
+        connect()
+      end
     end
+  end
+
+  def connecting?
+    @connect_thread != nil && @connect_thread.status ? true : false
+  end
+
+  def ping()
+    @internals[:mqtt].publish(@topics[:nil], nil, false, 2)
   end
 
   private
@@ -89,5 +101,13 @@ class Re
   	end
   	topic = levels.join('/')
     return topic
+  end
+
+  def init_mqtt()
+    config = JSON.parse(File.read('re.conf'))
+    @internals[:mqtt].host = config['host']
+    @internals[:mqtt].port = config['port']
+    @internals[:mqtt].persistent = true
+    @internals[:mqtt].blocking = true
   end
 end

@@ -1,5 +1,4 @@
 require 'json'
-require 'pp'
 require 'securerandom'
 
 require_relative 're'
@@ -11,6 +10,8 @@ params = {
 progressbar = nil
 
 re = Re.new
+
+re.internals[:ui].render_banner('re:FILERW')
 
 re.internals[:optparse].program_name = "re:filerw"
 re.internals[:optparse].version = "0.0.1"
@@ -32,6 +33,7 @@ re.internals[:digest].config({
 })
 
 re.add_topics({
+  :nil                    => "bu/nil",
   :bushi									=> "bu/bushi/#{params[:bushi]}",
   :filerw									=> "bu/bushi/#{params[:bushi]}/bushido/filerw/#{params[:id]}",
   :filerw_cmd_open				=> "bu/bushi/#{params[:bushi]}/bushido/filerw/#{params[:id]}/cmd/open",
@@ -57,7 +59,7 @@ re.add_packets({
 
 re.add_topic_callback(:bushi) do |message|
   packet = re.decoryse(message.payload)
-  pp packet
+  puts packet.to_yaml
 
   case packet[:status]
   when 'online'
@@ -79,7 +81,7 @@ end
 re.add_topic_callback(:filerw) do |message|
   if message.payload != '' then
     file = re.decryse(message.payload)
-    #pp file
+    #puts file.to_yaml
 
     progressbar.advance(params[:rate])
 
@@ -122,7 +124,6 @@ re.add_topic_callback(:filerw_evt_error) do |message|
 end
 
 re.internals[:mqtt].on_connack do
-  re.internals[:ui].render_banner('re:FILERW')
   progressbar = re.internals[:ui].progressbar_filerw(params[:size])
 end
 
@@ -131,24 +132,24 @@ END {
   packet = re.seen(packet)
   re.internals[:mqtt].publish(re.topics[:filerw_cmd_close], packet, false, 2)
   loop do
-    re.internals[:mqtt].loop_read
-    re.internals[:mqtt].loop_write
+    re.internals[:mqtt].mqtt_loop
   end
 }
 
+last_ping_time = Time.now
 loop do
 	begin
-		re.internals[:mqtt].loop_read
-		re.internals[:mqtt].loop_write
+		if re.internals[:mqtt].connected? then
+			re.internals[:mqtt].mqtt_loop
+			if last_ping_time <= Time.now - re.internals[:mqtt].keep_alive then
+				re.ping
+				last_ping_time = Time.now
+			end
+		else
+			re.connect() if !re.connecting?
+		end
 	rescue StandardError => error
-		puts error.full_message
-    config = JSON.parse(File.read('re.conf'))
-		re.internals[:mqtt].host = config['host']
-		re.internals[:mqtt].port = config['port']
-		re.internals[:mqtt].persistent = true
-		re.internals[:mqtt].blocking = true
-		re.internals[:mqtt].reconnect_limit = 3
-		re.internals[:mqtt].reconnect_delay = 60
-		re.connect()
+    puts error.full_message
+    re.connect() if !re.connecting?
 	end
 end

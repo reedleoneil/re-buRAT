@@ -1,5 +1,4 @@
 require 'json'
-require 'pp'
 require 'securerandom'
 
 require_relative 're'
@@ -9,6 +8,8 @@ params = {
 }
 
 re = Re.new
+
+re.internals[:ui].render_banner('re:MOTESHELL')
 
 re.internals[:optparse].program_name = "re:moteshell"
 re.internals[:optparse].version = "0.0.1"
@@ -26,6 +27,7 @@ re.internals[:digest].config({
 })
 
 re.add_topics({
+  :nil                    => "bu/nil",
   :bushi									=> "bu/bushi/#{params[:bushi]}",
   :remoteshell						=> "bu/bushi/#{params[:bushi]}/bushido/remoteshell/#{params[:id]}",
   :remoteshell_cmd_open		=> "bu/bushi/#{params[:bushi]}/bushido/remoteshell/#{params[:id]}/cmd/open",
@@ -44,7 +46,8 @@ re.add_packets({
 
 re.add_topic_callback(:bushi) do |message|
   packet = re.decoryse(message.payload)
-  pp packet
+
+  puts packet.to_yaml
 
   case packet[:status]
   when 'online'
@@ -66,7 +69,7 @@ end
 re.add_topic_callback(:remoteshell) do |message|
   if message.payload != '' then
     packet = re.decryse(message.payload)
-    pp packet
+    puts packet.to_yaml
   else
     exit
   end
@@ -87,10 +90,6 @@ re.add_topic_callback(:remoteshell_evt_error) do |message|
   puts packet.error
 end
 
-re.internals[:mqtt].on_connack do
-  re.internals[:ui].render_banner('re:MOTESHELL')
-end
-
 Thread.new {
   loop do
     packet = re.packets[:write].dup
@@ -103,28 +102,27 @@ Thread.new {
 
 END {
   packet = re.packets[:close]
-  packet = re.internals[:serialization].serialize(packet)
-  packet = re.internals[:aes].encrypt(packet)
+  packet = re.seen(packet)
   re.internals[:mqtt].publish(re.topics[:remoteshell_cmd_close], packet, false, 2)
   loop do
-    re.internals[:mqtt].loop_read
-    re.internals[:mqtt].loop_write
+    re.internals[:mqtt].mqtt_loop
   end
 }
 
+last_ping_time = Time.now
 loop do
 	begin
-		re.internals[:mqtt].loop_read
-		re.internals[:mqtt].loop_write
+		if re.internals[:mqtt].connected? then
+			re.internals[:mqtt].mqtt_loop
+			if last_ping_time <= Time.now - re.internals[:mqtt].keep_alive then
+				re.ping
+				last_ping_time = Time.now
+			end
+		else
+			re.connect() if !re.connecting?
+		end
 	rescue StandardError => error
-		puts error
-    config = JSON.parse(File.read('re.conf'))
-		re.internals[:mqtt].host = config['host']
-		re.internals[:mqtt].port = config['port']
-		re.internals[:mqtt].persistent = true
-		re.internals[:mqtt].blocking = true
-		re.internals[:mqtt].reconnect_limit = 3
-		re.internals[:mqtt].reconnect_delay = 60
-		re.connect()
+    puts error.full_message
+    re.connect() if !re.connecting?
 	end
 end

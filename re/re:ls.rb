@@ -7,6 +7,8 @@ bushi = {}
 
 re = Re.new
 
+  re.internals[:ui].render_banner('re:LS')
+
 re.internals[:optparse].program_name = "re:ls"
 re.internals[:optparse].version = "0.0.1"
 re.internals[:optparse].parse!(into: params)
@@ -34,28 +36,20 @@ re.add_topic_callback(:bushi) do |message|
   end
 end
 
-Thread.new {
-  loop do
-    sleep re.internals[:mqtt].keep_alive
-    if re.internals[:mqtt].connected? then
-      re.internals[:mqtt].publish(re.topics[:nil], nil, false, 2)
-    end
-  end
-}
-
+last_ping_time = Time.now
 loop do
 	begin
-		re.internals[:mqtt].loop_read
-		re.internals[:mqtt].loop_write
+		if re.internals[:mqtt].connected? then
+			re.internals[:mqtt].mqtt_loop
+			if last_ping_time <= Time.now - re.internals[:mqtt].keep_alive then
+				re.ping
+				last_ping_time = Time.now
+			end
+		else
+			re.connect() if !re.connecting?
+		end
 	rescue StandardError => error
 		puts error.full_message
-    config = JSON.parse(File.read('re.conf'))
-		re.internals[:mqtt].host = config['host']
-		re.internals[:mqtt].port = config['port']
-		re.internals[:mqtt].persistent = true
-		re.internals[:mqtt].blocking = true
-		re.internals[:mqtt].reconnect_limit = 3
-		re.internals[:mqtt].reconnect_delay = 60
-		re.connect()
+		re.connect() if !re.connecting?
 	end
 end
