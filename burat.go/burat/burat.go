@@ -57,7 +57,6 @@ type buRAT struct {
   _cmdTopics      map[string]func (client mqtt.Client, msg mqtt.Message)
   _topics         map[string]string
   _isConnecting   bool
-  _mqttOptions    mqtt.ClientOptions
 }
 
 type BuRAT interface {
