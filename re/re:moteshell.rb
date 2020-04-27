@@ -46,7 +46,6 @@ re.add_packets({
 
 re.add_topic_callback(:bushi) do |message|
   packet = re.decoryse(message.payload)
-
   puts packet.to_yaml
 
   case packet[:status]
@@ -58,9 +57,9 @@ re.add_topic_callback(:bushi) do |message|
       :iv => packet[:aes]['iv']
     })
 
-    packet = re.packets[:open]
+    packet = re.packets(:open)
     packet = re.seen(packet)
-    re.internals[:mqtt].publish(re.topics[:remoteshell_cmd_open], packet, false, 2)
+    re.publish(:remoteshell_cmd_open, packet, false, 2)
   when 'offline'
     exit
   end
@@ -92,18 +91,18 @@ end
 
 Thread.new {
   loop do
-    packet = re.packets[:write].dup
+    packet = re.packets(:write)
     packet[:data] = $stdin.gets.chomp
     packet = re.internals[:serialization].serialize(packet)
     packet = re.internals[:aes].encrypt(packet)
-    re.internals[:mqtt].publish(re.topics[:remoteshell_cmd_write], packet, false, 2)
+    re.publish(:remoteshell_cmd_write, packet, false, 2)
   end
 }
 
 END {
-  packet = re.packets[:close]
+  packet = re.packets(:close)
   packet = re.seen(packet)
-  re.internals[:mqtt].publish(re.topics[:remoteshell_cmd_close], packet, false, 2)
+  re.publish(:remoteshell_cmd_close, packet, false, 2)
   loop do
     re.internals[:mqtt].mqtt_loop
   end

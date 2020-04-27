@@ -8,7 +8,7 @@ params = {
 
 re = Re.new
 
-  re.internals[:ui].render_banner('re:CLEAR')
+re.internals[:ui].render_banner('re:CLEAR')
 
 re.internals[:optparse].program_name = "re:clear"
 re.internals[:optparse].version = "0.0.1"

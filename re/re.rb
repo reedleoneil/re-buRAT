@@ -8,8 +8,7 @@ require_relative 'internals/serialization'
 require_relative 'internals/ui'
 
 class Re
-  attr_accessor :internals
-  attr_reader :topics, :packets
+  attr_reader :internals
   def initialize()
     @internals = {
       :optparse       => OptionParser.new,
@@ -51,11 +50,8 @@ class Re
     @internals[:mqtt].add_topic_callback(topic, block)
   end
 
-  def publish(id, topic, payload="", retain=false, qos=0)
-    topic = @topics[topic].dup
-    topic['+'] = @internals[:digest].digest(id)
-    #topic['+'] = id
-    @internals[:mqtt].publish(topic, payload, retain, qos)
+  def publish(topic, payload="", retain=false, qos=0)
+    @internals[:mqtt].publish(@topics[topic], payload, retain, qos)
   end
 
   def add_topics(topics)
@@ -67,6 +63,10 @@ class Re
 
   def add_packets(packets)
     @packets = packets
+  end
+
+  def packets(packet)
+    @packets[packet].dup
   end
 
   def connect()

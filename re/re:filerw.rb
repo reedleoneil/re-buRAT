@@ -70,9 +70,9 @@ re.add_topic_callback(:bushi) do |message|
       :iv => packet[:aes]['iv']
     })
 
-    packet = re.packets[:open]
+    packet = re.packets(:open)
     packet = re.seen(packet)
-    re.internals[:mqtt].publish(re.topics[:filerw_cmd_open], packet, false, 2)
+    re.publish(:filerw_cmd_open, packet, false, 2)
   when 'offline'
     exit
   end
@@ -87,19 +87,19 @@ re.add_topic_callback(:filerw) do |message|
 
     case file.mode
     when 'read'
-      topic = re.topics[:filerw_cmd_read]
-      packet = re.packets[:read]
+      topic = :filerw_cmd_read
+      packet = re.packets(:read)
       remaining_bytesio = file.size.to_i - file.bytesio.to_i
       packet[:length] = remaining_bytesio >= params[:rate] ? params[:rate] : remaining_bytesio
     when 'write'
-      topic = re.topics[:filerw_cmd_write]
-      packet = re.packets[:write]
+      topic = :filerw_cmd_write
+      packet = re.packets(:write)
       packet[:data] = File.binread(params[:source], params[:rate], file.bytesio.to_i)
     end
 
     if file.size.to_i > file.bytesio.to_i then
       packet = re.seen(packet)
-      re.internals[:mqtt].publish(topic, packet, false, 2)
+      re.publish(topic, packet, false, 2)
     end
   else
     exit
@@ -130,7 +130,7 @@ end
 END {
   packet = re.packets[:close]
   packet = re.seen(packet)
-  re.internals[:mqtt].publish(re.topics[:filerw_cmd_close], packet, false, 2)
+  re.publish(:filerw_cmd_close, packet, false, 2)
   loop do
     re.internals[:mqtt].mqtt_loop
   end
