@@ -87,11 +87,13 @@ re.add_topic_callback(:filerw) do |message|
         bytesio = 0
         while bytesio <= params[:size]
           packet = re.packets(:read)
-          packet[:length] = params[:rate]
+          length = bytesio + params[:rate] <= params[:size] ? params[:rate] : params[:size] - bytesio
+          packet[:length] = length
           packet[:offset] = bytesio
           packet = re.seen(packet)
           re.publish(:filerw_cmd_read, packet, false, 2)
           bytesio += params[:rate]
+          sleep 0.01
         end
       }
     when 'write'
@@ -99,11 +101,13 @@ re.add_topic_callback(:filerw) do |message|
         bytesio = 0
         while bytesio <= params[:size]
           packet = re.packets(:write)
-          packet[:data] = File.binread(params[:source], params[:rate], bytesio)
+          length = bytesio + params[:rate] <= params[:size] ? params[:rate] : params[:size] - bytesio
+          packet[:data] = File.binread(params[:source], length, bytesio)
           packet[:offset] = bytesio
           packet = re.seen(packet)
           re.publish(:filerw_cmd_write, packet, false, 2)
           bytesio += params[:rate]
+          sleep 0.01
         end
       }
     end
@@ -114,13 +118,13 @@ end
 
 re.add_topic_callback(:filerw_evt_read) do |message|
   packet = re.decryse(message.payload)
-  progressbar.advance(packet.offset)
+  progressbar.advance(params[:rate])
   File.binwrite(params[:destination], packet.data, packet.offset)
 end
 
 re.add_topic_callback(:filerw_evt_write) do |message|
   packet = re.decryse(message.payload)
-  progressbar.advance(packet.offset)
+  progressbar.advance(params[:rate])
 end
 
 re.add_topic_callback(:filerw_evt_error) do |message|
