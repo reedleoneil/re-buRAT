@@ -68,7 +68,7 @@ end
 # filerw commands
 burat.add_topic_callback(:filerw_cmd_open) do |message|
 	packet = burat.decryse(message.payload)
-	burat.bushido[:filerw].open(packet.id, packet.path, packet.mode, packet.size)
+	burat.bushido[:filerw].open(packet.id, packet.path)
 end
 
 burat.add_topic_callback(:filerw_cmd_close) do |message|
@@ -78,12 +78,12 @@ end
 
 burat.add_topic_callback(:filerw_cmd_read) do |message|
 	packet = burat.decryse(message.payload)
-	burat.bushido[:filerw].read(packet.id, packet.length)
+	burat.bushido[:filerw].read(packet.id, packet.length, packet.offset)
 end
 
 burat.add_topic_callback(:filerw_cmd_write) do |message|
 	packet = burat.decryse(message.payload)
-	burat.bushido[:filerw].write(packet.id, packet.data)
+	burat.bushido[:filerw].write(packet.id, packet.data, packet.offset)
 end
 
 # remoteshell events
@@ -109,7 +109,7 @@ end
 
 burat.bushido[:remoteshell].on :write do |id, data|
   puts "remoteshell.write #{id} #{data}"
-	packet = { :id => id, :data => data	}
+	packet = { :id => id, :data => data }
 	packet = burat.seen(packet)
 	burat.publish(id, :remoteshell_evt_write, packet, false, 2)
 end
@@ -127,10 +127,7 @@ burat.bushido[:filerw].on :open do |id|
 	file = burat.bushido[:filerw].files.find { |file| file.id == id }
 	packet = {
 		:id				=> id,
-		:path			=> file.path,
-		:mode			=> file.mode,
-		:size			=> file.size,
-		:bytesio	=> file.bytesio
+		:path			=> file.path
 	}
 	packet = burat.seen(packet)
 	burat.publish(id, :filerw, packet, true, 2)
@@ -141,40 +138,18 @@ burat.bushido[:filerw].on :close do |id|
 	burat.publish(id, :filerw, nil, true, 2)
 end
 
-burat.bushido[:filerw].on :read do |id, data|
+burat.bushido[:filerw].on :read do |id, data, offset|
 	puts "filerw.read #{id} #{data}"
-	packet = { :id => id, :data	=> data }
+	packet = { :id => id, :data	=> data, :offset => offset }
 	packet = burat.seen(packet)
 	burat.publish(id, :filerw_evt_read, packet, false, 2)
-
-	file = burat.bushido[:filerw].files.find { |file| file.id == id }
-	packet = {
-		:id			=> id,
-		:path		=> file.path,
-		:mode		=> file.mode,
-		:size		=> file.size,
-		:bytesio	=> file.bytesio
-	}
-	packet = burat.seen(packet)
-	burat.publish(id, :filerw, packet, true, 2)
 end
 
-burat.bushido[:filerw].on :write do |id, length|
+burat.bushido[:filerw].on :write do |id, length, offset|
   puts "filerw.write #{id} #{length}"
-	packet = { :id => id,	:length	=> length }
+	packet = { :id => id,	:length	=> length, :offset => offset }
 	packet = burat.seen(packet)
 	burat.publish(id, :filerw_evt_write, packet, false, 2)
-
-	file = burat.bushido[:filerw].files.find { |file| file.id == id }
-	packet = {
-		:id			=> id,
-		:path		=> file.path,
-		:mode		=> file.mode,
-		:size		=> file.size,
-		:bytesio	=> file.bytesio
-	}
-	packet = burat.seen(packet)
-	burat.publish(id, :filerw, packet, true, 2)
 end
 
 burat.bushido[:filerw].on :error do |id, error|

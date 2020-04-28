@@ -1,23 +1,18 @@
 class File
-  attr_reader :id, :path, :mode, :size, :bytesio
+  attr_reader :id, :path
 
   def initialize(params)
     @id = params[:id]
     @path = params[:path]
-    @mode = params[:mode]
-    @size = params[:size]
-    @bytesio = 0
   end
 
-  def read(length)
-    data = File.binread(@path, length, @bytesio)
-    @bytesio += length
+  def read(length, offset)
+    data = File.binread(@path, length, offset)
     return data
   end
 
-  def write(data)
-    length = File.binwrite(@path, data, @bytesio)
-    @bytesio += length
+  def write(data, offset)
+    length = File.binwrite(@path, data, offset)
     return length
   end
 end

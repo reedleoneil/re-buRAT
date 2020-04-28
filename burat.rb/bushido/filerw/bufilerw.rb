@@ -8,8 +8,8 @@ module Bushido
       @files = []
       @on_open  = lambda { |id| puts "remoteshell@on_open id=#{id}" }
       @on_close = lambda { |id| puts "remoteshell@on_close id=#{id}" }
-      @on_read  = lambda { |id, data| puts "filerw@read id=#{id} data=#{data}" }
-      @on_write = lambda { |id, length| puts "filerw@write id=#{id} length=#{length}" }
+      @on_read  = lambda { |id, data, offset| puts "filerw@read id=#{id} data=#{data} offset=#{offset}" }
+      @on_write = lambda { |id, length, offset| puts "filerw@write id=#{id} length=#{length} offset=#{offset}" }
       @on_error = lambda { |id, error| puts "filerw@error = id=#{id} error=#{error}" }
     end
 
@@ -28,12 +28,10 @@ module Bushido
       end
     end
 
-    def open(id, path, mode, size)
+    def open(id, path)
       file = File.new({
         :id => id,
-        :path => path,
-        :mode => mode,
-        :size => size
+        :path => path
       })
       @files.push file
       @on_open.call(id)
@@ -45,21 +43,21 @@ module Bushido
       @on_close.call(id)
     end
 
-    def read(id, length)
+    def read(id, length, offset)
       file = @files.find { |file| file.id == id }
       begin
-        data = file.read(length)
-        @on_read.call(id, data)
+        data = file.read(length, offset)
+        @on_read.call(id, data, offset)
       rescue StandardError => error
         @on_error.call(id, error.full_message)
       end
     end
 
-    def write(id, data)
+    def write(id, data, offset)
       file = @files.find { |file| file.id == id }
       begin
-        length = file.write(data)
-        @on_write.call(id, length)
+        length = file.write(data, offset)
+        @on_write.call(id, length, offset)
       rescue StandardError => error
         @on_error.call(id, error.full_message)
       end
