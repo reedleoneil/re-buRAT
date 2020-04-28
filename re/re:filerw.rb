@@ -48,13 +48,11 @@ re.add_topics({
 re.add_packets({
   :open =>  {
     :id => params[:id],
-    :path => params[:mode] == 'read' ? params[:source] : params[:destination],
-    :mode => params[:mode],
-    :size => params[:size]
+    :path => params[:mode] == 'read' ? params[:source] : params[:destination]
   },
   :close => { :id => params[:id] },
-  :read => { :id => params[:id], :length => nil },
-  :write => { :id => params[:id], :data => nil }
+  :read => { :id => params[:id], :length => nil, :offset => nil },
+  :write => { :id => params[:id], :data => nil, :offset => nil }
 })
 
 re.add_topic_callback(:bushi) do |message|
@@ -81,25 +79,33 @@ end
 re.add_topic_callback(:filerw) do |message|
   if message.payload != '' then
     file = re.decryse(message.payload)
-    #puts file.to_yaml
+    puts file.to_yaml
 
-    progressbar.advance(params[:rate])
-
-    case file.mode
+    case params[:mode]
     when 'read'
-      topic = :filerw_cmd_read
-      packet = re.packets(:read)
-      remaining_bytesio = file.size.to_i - file.bytesio.to_i
-      packet[:length] = remaining_bytesio >= params[:rate] ? params[:rate] : remaining_bytesio
+      Thread.new {
+        bytesio = 0
+        while bytesio <= params[:size]
+          packet = re.packets(:read)
+          packet[:length] = params[:rate]
+          packet[:offset] = bytesio
+          packet = re.seen(packet)
+          re.publish(:filerw_cmd_read, packet, false, 2)
+          bytesio += params[:rate]
+        end
+      }
     when 'write'
-      topic = :filerw_cmd_write
-      packet = re.packets(:write)
-      packet[:data] = File.binread(params[:source], params[:rate], file.bytesio.to_i)
-    end
-
-    if file.size.to_i > file.bytesio.to_i then
-      packet = re.seen(packet)
-      re.publish(topic, packet, false, 2)
+      Thread.new {
+        bytesio = 0
+        while bytesio <= params[:size]
+          packet = re.packets(:write)
+          packet[:data] = File.binread(params[:source], params[:rate], bytesio)
+          packet[:offset] = bytesio
+          packet = re.seen(packet)
+          re.publish(:filerw_cmd_write, packet, false, 2)
+          bytesio += params[:rate]
+        end
+      }
     end
   else
     exit
@@ -108,14 +114,13 @@ end
 
 re.add_topic_callback(:filerw_evt_read) do |message|
   packet = re.decryse(message.payload)
-  #puts packet[:data]
-  offset = File.exist?(params[:destination]) ? File.size(params[:destination]) : 0
-  File.binwrite(params[:destination], packet.data, offset)
+  progressbar.advance(packet.offset)
+  File.binwrite(params[:destination], packet.data, packet.offset)
 end
 
 re.add_topic_callback(:filerw_evt_write) do |message|
   packet = re.decryse(message.payload)
-  # packet[:length]
+  progressbar.advance(packet.offset)
 end
 
 re.add_topic_callback(:filerw_evt_error) do |message|
