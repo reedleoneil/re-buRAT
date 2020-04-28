@@ -3,9 +3,6 @@ package packets
 type FilerwOpenPacket struct {
   Id        string  `msgpack:"id"`
   Path      string  `msgpack:"path"`
-  Mode      string  `msgpack:"mode"`
-  Size      int     `msgpack:"size"`
-  BytesIO   int     `msgpack:"bytesio"`
 }
 
 type FilerwClosePacket struct {
@@ -15,19 +12,18 @@ type FilerwClosePacket struct {
 type FilerwReadPacket struct {
   Id        string  `msgpack:"id"`
   Length    int     `msgpack:"length"`
+  Offset    int     `msgpack:"offset"`
 }
 
 type FilerwWritePacket struct {
   Id        string  `msgpack:"id"`
 	Data      []byte  `msgpack:"data"`
+  Offset    int     `msgpack:"offset"`
 }
 
 type FilerwOnOpenPacket struct {
   Id        string  `msgpack:"id"`
   Path      string  `msgpack:"path"`
-  Mode      string  `msgpack:"mode"`
-  Size      int     `msgpack:"size"`
-  BytesIO   int     `msgpack:"bytesio"`
 }
 
 type FilerwOnClosePacket struct {
@@ -37,11 +33,13 @@ type FilerwOnClosePacket struct {
 type FilerwOnReadPacket struct {
 	Id        string  `msgpack:"id"`
   Data      []byte  `msgpack:"data"`
+  Offset    int     `msgpack:"offset"`
 }
 
 type FilerwOnWritePacket struct {
   Id        string  `msgpack:"id"`
   Length    int     `msgpack:"length"`
+  Offset    int     `msgpack:"offset"`
 }
 
 type FilerwOnErrorPacket struct {
