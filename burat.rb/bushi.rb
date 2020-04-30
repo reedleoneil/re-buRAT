@@ -159,6 +159,26 @@ burat.bushido[:filerw].on :error do |id, error|
 	burat.publish(id, :filerw_evt_error, packet, false, 2)
 end
 
+burat.add_topic_callback(:remoteshell) do |message|
+	if message.payload != '' then
+		begin
+			packet = burat.decryse(message.payload)
+		rescue StandardError => error
+			burat.internals[:mqtt].publish(message.topic, nil, true, 2)
+		end
+	end
+end
+
+burat.add_topic_callback(:filerw) do |message|
+	if message.payload != '' then
+		begin
+			packet = burat.decryse(message.payload)
+		rescue StandardError => error
+			burat.internals[:mqtt].publish(message.topic, nil, true, 2)
+		end
+	end
+end
+
 last_ping_time = Time.now
 loop do
 	begin
