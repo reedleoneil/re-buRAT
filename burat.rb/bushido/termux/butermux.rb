@@ -32,7 +32,7 @@ module Bushido
         @on_battery_status = handler
       when :call_log
         @on_call_log = handler
-      when :cmaera_info
+      when :camera_info
         @on_camera_info = handler
       when :camera_photo
         @on_camera_photo = handler

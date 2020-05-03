@@ -1,6 +1,9 @@
 require_relative 'burat'
 
-burat = BuRat.new
+burat = BuRat.new([
+	:remoteshell,
+	:filerw
+])
 
 params = {}
 burat.internals[:optparse].program_name = "bushi"
