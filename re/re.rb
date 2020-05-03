@@ -1,4 +1,5 @@
 require 'base64'
+require 'json'
 require 'optparse'
 require 'ostruct'
 require 'paho-mqtt'

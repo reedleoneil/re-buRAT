@@ -1,5 +1,3 @@
-require 'json'
-
 require_relative 're'
 
 params = {
