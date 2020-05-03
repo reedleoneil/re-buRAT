@@ -32,6 +32,7 @@ end
 
 last_ping_time = Time.now
 loop do
+	sleep 0.1
 	begin
 		if re.internals[:mqtt].connected? then
 			re.internals[:mqtt].mqtt_loop
