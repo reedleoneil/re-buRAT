@@ -292,7 +292,7 @@ burat.bushido[:termux].on :camera_photo do |id, data|
   puts "termux.audio_info #{id}"
 	packet = { :id => id, :data => data}
 	packet = burat.seen(packet)
-	burat.publish(id, :termux_evt_call_log, packet, false, 2)
+	burat.publish(id, :termux_evt_camera_photo, packet, false, 2)
 end
 
 burat.bushido[:termux].on :contact_list do |id, data|
