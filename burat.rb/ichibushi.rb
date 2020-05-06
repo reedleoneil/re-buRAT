@@ -250,7 +250,7 @@ end
 # termux events
 burat.bushido[:termux].on :open do |id|
   puts "termux.open #{id}"
-	packet = id
+	packet = { :id => id }
 	packet = burat.seen(packet)
 	burat.publish(id, :termux, packet, true, 2)
 end
