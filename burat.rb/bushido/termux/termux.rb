@@ -1,3 +1,5 @@
+require 'json'
+
 class Termux
   attr_reader :id
   def initialize(params)
@@ -5,19 +7,19 @@ class Termux
   end
 
   def audio_info()
-    parse(`termux-audio-info`)
+    JSON.parse(`termux-audio-info`)
   end
 
   def battery_status()
-    parse(`termux-battery-status`)
+    JSON.parse(`termux-battery-status`)
   end
 
   def call_log(limit, offset)
-    parse(`termux-call-log -l #{limit} -o #{offset}`)
+    JSON.parse(`termux-call-log -l #{limit} -o #{offset}`)
   end
 
   def camera_info()
-    parse(`termux-camera-info`)
+    JSON.parse(`termux-camera-info`)
   end
 
   def camera_photo(camera_id, output_file)
@@ -26,11 +28,11 @@ class Termux
   end
 
   def contact_list()
-    parse(`termux-camera-info`)
+    JSON.parse(`termux-camera-info`)
   end
 
   def sms_list(limit, offset, type)
-    parse(`termux-sms-list -d -n -l #{limit} -o #{offset} -t #{type}`)
+    JSON.parse(`termux-sms-list -d -n -l #{limit} -o #{offset} -t #{type}`)
   end
 
   def sms_send(number, text)
@@ -42,19 +44,14 @@ class Termux
   end
 
   def device_info()
-    parse(`termux-telephony-deviceinfo`)
+    JSON.parse(`termux-telephony-deviceinfo`)
   end
 
   def wifi_connection_info()
-    parse(`termux-wifi-connectioninfo`)
+    JSON.parse(`termux-wifi-connectioninfo`)
   end
 
   def wifi_scan_info()
-    parse(`termux-wifi-scaninfo`)
-  end
-
-  private
-  def parse(data)
-    return OpenStruct.new JSON.parse(data)
+    JSON.parse(`termux-wifi-scaninfo`)
   end
 end
