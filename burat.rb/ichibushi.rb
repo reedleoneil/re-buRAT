@@ -37,9 +37,9 @@ burat.add_topics({
 	:nil															=> "bu/nil",
 	:bushi														=> "bu/bushi/BURAT",
 	:remoteshell											=> "bu/bushi/BURAT/bushido/remoteshell/+",
-	:remoteshell_cmd_open							=> "bu/bushi/BURAT/bushido/remoteshell/+/cmd/open",
-	:remoteshell_cmd_close						=> "bu/bushi/BURAT/bushido/remoteshell/+/cmd/close",
 	:remoteshell_cmd_write						=> "bu/bushi/BURAT/bushido/remoteshell/+/cmd/write",
+	:remoteshell_evt_open							=> "bu/bushi/BURAT/bushido/remoteshell/+/evt/open",
+	:remoteshell_evt_close						=> "bu/bushi/BURAT/bushido/remoteshell/+/evt/close",
 	:remoteshell_evt_read							=> "bu/bushi/BURAT/bushido/remoteshell/+/evt/read",
 	:remoteshell_evt_write						=> "bu/bushi/BURAT/bushido/remoteshell/+/evt/write",
 	:remoteshell_evt_error						=> "bu/bushi/BURAT/bushido/remoteshell/+/evt/error",
@@ -77,14 +77,19 @@ burat.add_topics({
 })
 
 # remoteshell commands
-burat.add_topic_callback(:remoteshell_cmd_open) do |message|
-	packet = burat.decryse(message.payload)
-	burat.bushido[:remoteshell].open(packet.id, packet.shell)
-end
-
-burat.add_topic_callback(:remoteshell_cmd_close) do |message|
-	packet = burat.decryse(message.payload)
-	burat.bushido[:remoteshell].close(packet.id)
+burat.add_topic_callback(:remoteshell) do |message|
+	if message.payload != '' then
+		begin
+			packet = burat.decryse(message.payload)
+			burat.bushido[:remoteshell].open(packet.id, packet.shell)
+		rescue StandardError => error
+			burat.internals[:mqtt].publish(message.topic, nil, true, 2)
+		end
+	else
+		id = (message.topic.split('/'))[5]
+		remoteshell = burat.bushido[:remoteshell].remoteshells.find { |remoteshell| burat.internals[:digest].digest(remoteshell.id) == id }
+		burat.bushido[:remoteshell].close(remoteshell.id) if remoteshell
+	end
 end
 
 burat.add_topic_callback(:remoteshell_cmd_write) do |message|
@@ -177,15 +182,16 @@ end
 # remoteshell events
 burat.bushido[:remoteshell].on :open do |id|
   puts "remoteshell.open #{id}"
-	remoteshell = burat.bushido[:remoteshell].remoteshells.find { |remoteshell| remoteshell.id == id }
-	packet = { :id => id, :shell => remoteshell.shell }
+	packet = { :id => id }
 	packet = burat.seen(packet)
-	burat.publish(id, :remoteshell, packet, true, 2)
+	burat.publish(id, :remoteshell_evt_open, packet, false, 2)
 end
 
 burat.bushido[:remoteshell].on :close do |id|
 	puts "remoteshell.close #{id}"
-	burat.publish(id, :remoteshell, nil, true, 2)
+	packet = { :id => id }
+	packet = burat.seen(packet)
+	burat.publish(id, :remoteshell_evt_close, packet, false, 2)
 end
 
 burat.bushido[:remoteshell].on :read do |id, data|
@@ -331,16 +337,6 @@ burat.bushido[:termux].on :wifi_scan_info do |id, data|
 end
 
 # others
-burat.add_topic_callback(:remoteshell) do |message|
-	if message.payload != '' then
-		begin
-			packet = burat.decryse(message.payload)
-		rescue StandardError => error
-			burat.internals[:mqtt].publish(message.topic, nil, true, 2)
-		end
-	end
-end
-
 burat.add_topic_callback(:filerw) do |message|
 	if message.payload != '' then
 		begin
