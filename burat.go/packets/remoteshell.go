@@ -1,12 +1,8 @@
 package packets
 
-type RemoteShellOpenPacket struct {
+type RemoteShellPacket struct {
 	Id			string	`msgpack:"id"`
 	Shell 	string	`msgpack:"shell"`
-}
-
-type RemoteShellClosePacket struct {
-	Id			string	`msgpack:"id"`
 }
 
 type RemoteShellWritePacket struct {
@@ -16,7 +12,6 @@ type RemoteShellWritePacket struct {
 
 type RemoteShellOnOpenPacket struct {
 	Id 			string	`msgpack:"id"`
-	Shell		string	`msgpack:"shell"`
 }
 
 type RemoteShellOnClosePacket struct {
