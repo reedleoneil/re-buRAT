@@ -29,7 +29,7 @@ class Termux
   end
 
   def contact_list()
-    JSON.parse(`termux-camera-info`)
+    JSON.parse(`termux-contact-list`)
   end
 
   def sms_list(limit, offset, type)
