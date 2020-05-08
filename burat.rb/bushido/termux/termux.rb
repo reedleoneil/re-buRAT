@@ -23,8 +23,9 @@ class Termux
   end
 
   def camera_photo(camera_id, output_file)
-    `termux-camera-info -c #{camera_id} #{output_file}`
-    File.read(output_file)
+    `termux-camera-photo -c #{camera_id} #{output_file}`
+    `pkill com.termux.api`
+    File.binread(output_file)
   end
 
   def contact_list()
