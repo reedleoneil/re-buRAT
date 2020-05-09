@@ -1,12 +1,8 @@
 package packets
 
-type FilerwOpenPacket struct {
+type FilerwPacket struct {
   Id        string  `msgpack:"id"`
   Path      string  `msgpack:"path"`
-}
-
-type FilerwClosePacket struct {
-  Id        string  `msgpack:"id"`
 }
 
 type FilerwReadPacket struct {
@@ -23,7 +19,6 @@ type FilerwWritePacket struct {
 
 type FilerwOnOpenPacket struct {
   Id        string  `msgpack:"id"`
-  Path      string  `msgpack:"path"`
 }
 
 type FilerwOnClosePacket struct {
