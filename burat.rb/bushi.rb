@@ -54,7 +54,7 @@ burat.add_topics({
 
 # remoteshell commands
 burat.add_topic_callback(:remoteshell) do |message|
-	if message.payload != '' then
+	if message.payload.length != 0 then
 		begin
 			packet = burat.decryse(message.payload)
 			burat.bushido[:remoteshell].open(packet.id, packet.shell)

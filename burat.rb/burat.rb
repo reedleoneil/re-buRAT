@@ -16,7 +16,7 @@ class BuRat
   attr_reader :id, :host, :os, :ip, :stauts, :internals, :bushido
   def initialize(bushido = [])
     begin
-      @id = '9991'
+      @id = id()
       @host = host()
       @os = os()
       @ip = :unknown
