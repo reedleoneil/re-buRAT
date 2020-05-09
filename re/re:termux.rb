@@ -29,8 +29,6 @@ re.add_topics({
   :nil                              => "bu/nil",
   :bushi									          => "bu/bushi/#{params[:bushi]}",
   :termux														=> "bu/bushi/#{params[:bushi]}/bushido/termux/#{params[:id]}",
-	:termux_cmd_open									=> "bu/bushi/#{params[:bushi]}/bushido/termux/#{params[:id]}/cmd/open",
-	:termux_cmd_close									=> "bu/bushi/#{params[:bushi]}/bushido/termux/#{params[:id]}/cmd/close",
 	:termux_cmd_audio_info						=> "bu/bushi/#{params[:bushi]}/bushido/termux/#{params[:id]}/cmd/audio_info",
 	:termux_cmd_battery_status				=> "bu/bushi/#{params[:bushi]}/bushido/termux/#{params[:id]}/cmd/battery_status",
 	:termux_cmd_call_log							=> "bu/bushi/#{params[:bushi]}/bushido/termux/#{params[:id]}/cmd/call_log",
@@ -41,6 +39,8 @@ re.add_topics({
 	:termux_cmd_device_info						=> "bu/bushi/#{params[:bushi]}/bushido/termux/#{params[:id]}/cmd/device_info",
 	:termux_cmd_wifi_connection_info	=> "bu/bushi/#{params[:bushi]}/bushido/termux/#{params[:id]}/cmd/wifi_connection_info",
 	:termux_cmd_wifi_scan_info				=> "bu/bushi/#{params[:bushi]}/bushido/termux/#{params[:id]}/cmd/wifi_scan_info",
+  :termux_evt_open									=> "bu/bushi/#{params[:bushi]}/bushido/termux/#{params[:id]}/evt/open",
+  :termux_evt_close									=> "bu/bushi/#{params[:bushi]}/bushido/termux/#{params[:id]}/evt/close",
 	:termux_evt_audio_info						=> "bu/bushi/#{params[:bushi]}/bushido/termux/#{params[:id]}/evt/audio_info",
 	:termux_evt_battery_status				=> "bu/bushi/#{params[:bushi]}/bushido/termux/#{params[:id]}/evt/battery_status",
 	:termux_evt_call_log							=> "bu/bushi/#{params[:bushi]}/bushido/termux/#{params[:id]}/evt/call_log",
@@ -83,59 +83,60 @@ re.add_topic_callback(:bushi) do |message|
 
     packet = re.packets(:open)
     packet = re.seen(packet)
-    re.publish(:termux_cmd_open, packet, false, 2)
+    re.publish(:termux, packet, false, 2)
   when 'offline'
     exit
   end
 end
 
-re.add_topic_callback(:termux) do |message|
-  if message.payload != '' then
-    packet = re.decryse(message.payload)
-    puts packet.to_yaml
+re.add_topic_callback(:termux_evt_open) do |message|
+  packet = re.decryse(message.payload)
+  puts packet.to_yaml
 
-    packet = re.packets(:audio_info)
-    packet = re.seen(packet)
-    re.publish(:termux_cmd_audio_info, packet, false, 2)
+  packet = re.packets(:audio_info)
+  packet = re.seen(packet)
+  re.publish(:termux_cmd_audio_info, packet, false, 2)
 
-    packet = re.packets(:battery_status)
-    packet = re.seen(packet)
-    re.publish(:termux_cmd_battery_status, packet, false, 2)
+  packet = re.packets(:battery_status)
+  packet = re.seen(packet)
+  re.publish(:termux_cmd_battery_status, packet, false, 2)
 
-    packet = re.packets(:call_log)
-    packet = re.seen(packet)
-    re.publish(:termux_cmd_call_log, packet, false, 2)
+  packet = re.packets(:call_log)
+  packet = re.seen(packet)
+  re.publish(:termux_cmd_call_log, packet, false, 2)
 
-    packet = re.packets(:camera_info)
-    packet = re.seen(packet)
-    re.publish(:termux_cmd_camera_info, packet, false, 2)
+  packet = re.packets(:camera_info)
+  packet = re.seen(packet)
+  re.publish(:termux_cmd_camera_info, packet, false, 2)
 
-    packet = re.packets(:camera_photo)
-    packet = re.seen(packet)
-    re.publish(:termux_cmd_camera_photo, packet, false, 2)
+  packet = re.packets(:camera_photo)
+  packet = re.seen(packet)
+  re.publish(:termux_cmd_camera_photo, packet, false, 2)
 
-    packet = re.packets(:contact_list)
-    packet = re.seen(packet)
-    re.publish(:termux_cmd_contact_list, packet, false, 2)
+  packet = re.packets(:contact_list)
+  packet = re.seen(packet)
+  re.publish(:termux_cmd_contact_list, packet, false, 2)
 
-    packet = re.packets(:sms_list)
-    packet = re.seen(packet)
-    re.publish(:termux_cmd_sms_list, packet, false, 2)
+  packet = re.packets(:sms_list)
+  packet = re.seen(packet)
+  re.publish(:termux_cmd_sms_list, packet, false, 2)
 
-    packet = re.packets(:device_info)
-    packet = re.seen(packet)
-    re.publish(:termux_cmd_device_info, packet, false, 2)
+  packet = re.packets(:device_info)
+  packet = re.seen(packet)
+  re.publish(:termux_cmd_device_info, packet, false, 2)
 
-    packet = re.packets(:wifi_connection_info)
-    packet = re.seen(packet)
-    re.publish(:termux_cmd_wifi_connection_info, packet, false, 2)
+  packet = re.packets(:wifi_connection_info)
+  packet = re.seen(packet)
+  re.publish(:termux_cmd_wifi_connection_info, packet, false, 2)
 
-    packet = re.packets(:wifi_scan_info)
-    packet = re.seen(packet)
-    re.publish(:termux_cmd_wifi_scan_info, packet, false, 2)
-  else
-    exit
-  end
+  packet = re.packets(:wifi_scan_info)
+  packet = re.seen(packet)
+  re.publish(:termux_cmd_wifi_scan_info, packet, false, 2)
+end
+
+re.add_topic_callback(:termux_evt_close) do |message|
+  packet = re.decryse(message.payload)
+  puts "termux.closed #{packet.id}"
 end
 
 re.add_topic_callback(:termux_evt_audio_info) do |message|
