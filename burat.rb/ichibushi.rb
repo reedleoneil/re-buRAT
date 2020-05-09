@@ -52,8 +52,6 @@ burat.add_topics({
 	:filerw_evt_write									=> "bu/bushi/BURAT/bushido/filerw/+/evt/write",
 	:filerw_evt_error									=> "bu/bushi/BURAT/bushido/filerw/+/evt/error",
 	:termux														=> "bu/bushi/BURAT/bushido/termux/+",
-	:termux_cmd_open									=> "bu/bushi/BURAT/bushido/termux/+/cmd/open",
-	:termux_cmd_close									=> "bu/bushi/BURAT/bushido/termux/+/cmd/close",
 	:termux_cmd_audio_info						=> "bu/bushi/BURAT/bushido/termux/+/cmd/audio_info",
 	:termux_cmd_battery_status				=> "bu/bushi/BURAT/bushido/termux/+/cmd/battery_status",
 	:termux_cmd_call_log							=> "bu/bushi/BURAT/bushido/termux/+/cmd/call_log",
@@ -64,6 +62,8 @@ burat.add_topics({
 	:termux_cmd_device_info						=> "bu/bushi/BURAT/bushido/termux/+/cmd/device_info",
 	:termux_cmd_wifi_connection_info	=> "bu/bushi/BURAT/bushido/termux/+/cmd/wifi_connection_info",
 	:termux_cmd_wifi_scan_info				=> "bu/bushi/BURAT/bushido/termux/+/cmd/wifi_scan_info",
+	:termux_evt_open									=> "bu/bushi/BURAT/bushido/termux/+/evt/open",
+	:termux_evt_close									=> "bu/bushi/BURAT/bushido/termux/+/evt/close",
 	:termux_evt_audio_info						=> "bu/bushi/BURAT/bushido/termux/+/evt/audio_info",
 	:termux_evt_battery_status				=> "bu/bushi/BURAT/bushido/termux/+/evt/battery_status",
 	:termux_evt_call_log							=> "bu/bushi/BURAT/bushido/termux/+/evt/call_log",
@@ -125,14 +125,20 @@ burat.add_topic_callback(:filerw_cmd_write) do |message|
 end
 
 # termux commands
-burat.add_topic_callback(:termux_cmd_open) do |message|
-	packet = burat.decryse(message.payload)
-	burat.bushido[:termux].open(packet.id)
-end
-
-burat.add_topic_callback(:termux_cmd_close) do |message|
-	packet = burat.decryse(message.payload)
-	burat.bushido[:termux].close(packet.id)
+burat.add_topic_callback(:termux) do |message|
+	puts message.payload
+	if message.payload.length != 0 then
+		begin
+			packet = burat.decryse(message.payload)
+			burat.bushido[:termux].open(packet.id)
+		rescue StandardError => error
+			burat.internals[:mqtt].publish(message.topic, nil, true, 2)
+		end
+	else
+		id = (message.topic.split('/'))[5]
+		termux = burat.bushido[:termux].termuxs.find { |termux| burat.internals[:digest].digest(termux.id) == id }
+		burat.bushido[:termux].close(termux.id) if termux
+	end
 end
 
 burat.add_topic_callback(:termux_cmd_audio_info) do |message|
@@ -262,12 +268,14 @@ burat.bushido[:termux].on :open do |id|
   puts "termux.open #{id}"
 	packet = { :id => id }
 	packet = burat.seen(packet)
-	burat.publish(id, :termux, packet, true, 2)
+	burat.publish(id, :termux_evt_open, packet, false, 2)
 end
 
 burat.bushido[:termux].on :close do |id|
   puts "termux.close #{id}"
-	burat.publish(id, :termux, nil, true, 2)
+	packet = { :id => id }
+	packet = burat.seen(packet)
+	burat.publish(id, :termux_evt_close, packet, false, 2)
 end
 
 burat.bushido[:termux].on :audio_info do |id, data|
