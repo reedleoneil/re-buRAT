@@ -35,10 +35,10 @@ re.add_topics({
   :nil                    => "bu/nil",
   :bushi									=> "bu/bushi/#{params[:bushi]}",
   :filerw									=> "bu/bushi/#{params[:bushi]}/bushido/filerw/#{params[:id]}",
-  :filerw_cmd_open				=> "bu/bushi/#{params[:bushi]}/bushido/filerw/#{params[:id]}/cmd/open",
-  :filerw_cmd_close				=> "bu/bushi/#{params[:bushi]}/bushido/filerw/#{params[:id]}/cmd/close",
   :filerw_cmd_read				=> "bu/bushi/#{params[:bushi]}/bushido/filerw/#{params[:id]}/cmd/read",
   :filerw_cmd_write				=> "bu/bushi/#{params[:bushi]}/bushido/filerw/#{params[:id]}/cmd/write",
+  :filerw_evt_open				=> "bu/bushi/#{params[:bushi]}/bushido/filerw/#{params[:id]}/evt/open",
+  :filerw_evt_close				=> "bu/bushi/#{params[:bushi]}/bushido/filerw/#{params[:id]}/evt/close",
   :filerw_evt_read				=> "bu/bushi/#{params[:bushi]}/bushido/filerw/#{params[:id]}/evt/read",
   :filerw_evt_write				=> "bu/bushi/#{params[:bushi]}/bushido/filerw/#{params[:id]}/evt/write",
   :filerw_evt_error				=> "bu/bushi/#{params[:bushi]}/bushido/filerw/#{params[:id]}/evt/error"
@@ -69,13 +69,13 @@ re.add_topic_callback(:bushi) do |message|
 
     packet = re.packets(:open)
     packet = re.seen(packet)
-    re.publish(:filerw_cmd_open, packet, false, 2)
+    re.publish(:filerw, packet, false, 2)
   when 'offline'
     exit
   end
 end
 
-re.add_topic_callback(:filerw) do |message|
+re.add_topic_callback(:filerw_evt_open) do |message|
   if message.payload != '' then
     file = re.decryse(message.payload)
     puts file.to_yaml
@@ -115,6 +115,12 @@ re.add_topic_callback(:filerw) do |message|
   end
 end
 
+re.add_topic_callback(:filerw_evt_close) do |message|
+  packet = re.decryse(message.payload)
+  puts "filerw.closed #{packet.id}"
+  exit
+end
+
 re.add_topic_callback(:filerw_evt_read) do |message|
   packet = re.decryse(message.payload)
   progressbar.advance(params[:rate])
@@ -136,9 +142,7 @@ re.internals[:mqtt].on_connack do
 end
 
 END {
-  packet = re.packets[:close]
-  packet = re.seen(packet)
-  re.publish(:filerw_cmd_close, packet, false, 2)
+  re.publish(:filerw, nil, false, 2)
   loop do
     re.internals[:mqtt].mqtt_loop
   end

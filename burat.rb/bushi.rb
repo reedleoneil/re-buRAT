@@ -43,17 +43,18 @@ burat.add_topics({
 	:remoteshell_evt_write	=> "bu/bushi/BURAT/bushido/remoteshell/+/evt/write",
 	:remoteshell_evt_error	=> "bu/bushi/BURAT/bushido/remoteshell/+/evt/error",
 	:filerw									=> "bu/bushi/BURAT/bushido/filerw/+",
-	:filerw_cmd_open				=> "bu/bushi/BURAT/bushido/filerw/+/cmd/open",
-	:filerw_cmd_close				=> "bu/bushi/BURAT/bushido/filerw/+/cmd/close",
 	:filerw_cmd_read				=> "bu/bushi/BURAT/bushido/filerw/+/cmd/read",
 	:filerw_cmd_write				=> "bu/bushi/BURAT/bushido/filerw/+/cmd/write",
+	:filerw_evt_open				=> "bu/bushi/BURAT/bushido/filerw/+/evt/open",
+	:filerw_evt_close				=> "bu/bushi/BURAT/bushido/filerw/+/evt/close",
 	:filerw_evt_read				=> "bu/bushi/BURAT/bushido/filerw/+/evt/read",
 	:filerw_evt_write				=> "bu/bushi/BURAT/bushido/filerw/+/evt/write",
 	:filerw_evt_error				=> "bu/bushi/BURAT/bushido/filerw/+/evt/error"
 })
 
+# remoteshell commands
 burat.add_topic_callback(:remoteshell) do |message|
-	if message.payload != '' then
+	if message.payload.length != 0 then
 		begin
 			packet = burat.decryse(message.payload)
 			burat.bushido[:remoteshell].open(packet.id, packet.shell)
@@ -73,14 +74,20 @@ burat.add_topic_callback(:remoteshell_cmd_write) do |message|
 end
 
 # filerw commands
-burat.add_topic_callback(:filerw_cmd_open) do |message|
-	packet = burat.decryse(message.payload)
-	burat.bushido[:filerw].open(packet.id, packet.path)
-end
-
-burat.add_topic_callback(:filerw_cmd_close) do |message|
-	packet = burat.decryse(message.payload)
-	burat.bushido[:filerw].close(packet.id)
+burat.add_topic_callback(:filerw) do |message|
+	puts message.payload
+	if message.payload.length != 0 then
+		begin
+			packet = burat.decryse(message.payload)
+			burat.bushido[:filerw].open(packet.id, packet.path)
+		rescue StandardError => error
+			burat.internals[:mqtt].publish(message.topic, nil, true, 2)
+		end
+	else
+		id = (message.topic.split('/'))[5]
+		file = burat.bushido[:filerw].files.find { |file| burat.internals[:digest].digest(file.id) == id }
+		burat.bushido[:filerw].close(file.id) if file
+	end
 end
 
 burat.add_topic_callback(:filerw_cmd_read) do |message|
@@ -132,18 +139,16 @@ end
 # filerw events
 burat.bushido[:filerw].on :open do |id|
   puts "filerw.open #{id}"
-	file = burat.bushido[:filerw].files.find { |file| file.id == id }
-	packet = {
-		:id				=> id,
-		:path			=> file.path
-	}
+	packet = { :id => id }
 	packet = burat.seen(packet)
-	burat.publish(id, :filerw, packet, true, 2)
+	burat.publish(id, :filerw_evt_open, packet, false, 2)
 end
 
 burat.bushido[:filerw].on :close do |id|
 	puts "filerw.close #{id}"
-	burat.publish(id, :filerw, nil, true, 2)
+	packet = { :id => id }
+	packet = burat.seen(packet)
+	burat.publish(id, :filerw_evt_close, packet, false, 2)
 end
 
 burat.bushido[:filerw].on :read do |id, data, offset|
@@ -165,16 +170,6 @@ burat.bushido[:filerw].on :error do |id, error|
 	packet = { :id => id, :error => error	}
 	packet = burat.seen(packet)
 	burat.publish(id, :filerw_evt_error, packet, false, 2)
-end
-
-burat.add_topic_callback(:filerw) do |message|
-	if message.payload != '' then
-		begin
-			packet = burat.decryse(message.payload)
-		rescue StandardError => error
-			burat.internals[:mqtt].publish(message.topic, nil, true, 2)
-		end
-	end
 end
 
 last_ping_time = Time.now
