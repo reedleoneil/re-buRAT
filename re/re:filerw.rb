@@ -76,42 +76,38 @@ re.add_topic_callback(:bushi) do |message|
 end
 
 re.add_topic_callback(:filerw_evt_open) do |message|
-  if message.payload != '' then
-    file = re.decryse(message.payload)
-    puts file.to_yaml
+  file = re.decryse(message.payload)
+  puts file.to_yaml
 
-    case params[:mode]
-    when 'read'
-      Thread.new {
-        bytesio = 0
-        while bytesio <= params[:size]
-          packet = re.packets(:read)
-          length = bytesio + params[:rate] <= params[:size] ? params[:rate] : params[:size] - bytesio
-          packet[:length] = length
-          packet[:offset] = bytesio
-          packet = re.seen(packet)
-          re.publish(:filerw_cmd_read, packet, false, 2)
-          bytesio += params[:rate]
-          sleep 0.01
-        end
-      }
-    when 'write'
-      Thread.new {
-        bytesio = 0
-        while bytesio <= params[:size]
-          packet = re.packets(:write)
-          length = bytesio + params[:rate] <= params[:size] ? params[:rate] : params[:size] - bytesio
-          packet[:data] = File.binread(params[:source], length, bytesio)
-          packet[:offset] = bytesio
-          packet = re.seen(packet)
-          re.publish(:filerw_cmd_write, packet, false, 2)
-          bytesio += params[:rate]
-          sleep 0.01
-        end
-      }
-    end
-  else
-    exit
+  case params[:mode]
+  when 'read'
+    Thread.new {
+      bytesio = 0
+      while bytesio <= params[:size]
+        packet = re.packets(:read)
+        length = bytesio + params[:rate] <= params[:size] ? params[:rate] : params[:size] - bytesio
+        packet[:length] = length
+        packet[:offset] = bytesio
+        packet = re.seen(packet)
+        re.publish(:filerw_cmd_read, packet, false, 2)
+        bytesio += params[:rate]
+        sleep 0.01
+      end
+    }
+  when 'write'
+    Thread.new {
+      bytesio = 0
+      while bytesio <= params[:size]
+        packet = re.packets(:write)
+        length = bytesio + params[:rate] <= params[:size] ? params[:rate] : params[:size] - bytesio
+        packet[:data] = File.binread(params[:source], length, bytesio)
+        packet[:offset] = bytesio
+        packet = re.seen(packet)
+        re.publish(:filerw_cmd_write, packet, false, 2)
+        bytesio += params[:rate]
+        sleep 0.01
+      end
+    }
   end
 end
 
