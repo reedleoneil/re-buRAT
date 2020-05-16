@@ -99,7 +99,6 @@ end
 
 # filerw commands
 burat.add_topic_callback(:filerw) do |message|
-	puts message.payload
 	if message.payload.length != 0 then
 		begin
 			packet = burat.decryse(message.payload)
@@ -265,84 +264,84 @@ end
 
 # termux events
 burat.bushido[:termux].on :open do |id|
-  puts "termux.open #{id}"
+  puts "termux.open #{id} #{data}"
 	packet = { :id => id }
 	packet = burat.seen(packet)
 	burat.publish(id, :termux_evt_open, packet, false, 2)
 end
 
 burat.bushido[:termux].on :close do |id|
-  puts "termux.close #{id}"
+  puts "termux.close #{id} #{data}"
 	packet = { :id => id }
 	packet = burat.seen(packet)
 	burat.publish(id, :termux_evt_close, packet, false, 2)
 end
 
 burat.bushido[:termux].on :audio_info do |id, data|
-  puts "termux.audio_info #{id}"
+  puts "termux.audio_info #{id} #{data}"
 	packet = { :id => id, :data => data}
 	packet = burat.seen(packet)
 	burat.publish(id, :termux_evt_audio_info, packet, false, 2)
 end
 
 burat.bushido[:termux].on :battery_status do |id, data|
-  puts "termux.battery_status #{id}"
+  puts "termux.battery_status #{id} #{data}"
 	packet = { :id => id, :data => data}
 	packet = burat.seen(packet)
 	burat.publish(id, :termux_evt_battery_status, packet, false, 2)
 end
 
 burat.bushido[:termux].on :call_log do |id, data|
-  puts "termux.call_log #{id}"
+  puts "termux.call_log #{id} #{data}"
 	packet = { :id => id, :data => data}
 	packet = burat.seen(packet)
 	burat.publish(id, :termux_evt_call_log, packet, false, 2)
 end
 
 burat.bushido[:termux].on :camera_info do |id, data|
-  puts "termux.camera_info #{id}"
+  puts "termux.camera_info #{id} #{data}"
 	packet = { :id => id, :data => data}
 	packet = burat.seen(packet)
 	burat.publish(id, :termux_evt_camera_info, packet, false, 2)
 end
 
 burat.bushido[:termux].on :camera_photo do |id, data|
-  puts "termux.camera_photo #{id}"
+  puts "termux.camera_photo #{id} #{data}"
 	packet = { :id => id, :data => data}
 	packet = burat.seen(packet)
 	burat.publish(id, :termux_evt_camera_photo, packet, false, 2)
 end
 
 burat.bushido[:termux].on :contact_list do |id, data|
-  puts "termux.contact_list #{id}"
+  puts "termux.contact_list #{id} #{data}"
 	packet = { :id => id, :data => data}
 	packet = burat.seen(packet)
 	burat.publish(id, :termux_evt_contact_list, packet, false, 2)
 end
 
 burat.bushido[:termux].on :sms_list do |id, data|
-  puts "termux.sms_list #{id}"
+  puts "termux.sms_list #{id} #{data}"
 	packet = { :id => id, :data => data}
 	packet = burat.seen(packet)
 	burat.publish(id, :termux_evt_sms_list, packet, false, 2)
 end
 
 burat.bushido[:termux].on :device_info do |id, data|
-  puts "termux.device_info #{id}"
+  puts "termux.device_info #{id} #{data}"
 	packet = { :id => id, :data => data}
 	packet = burat.seen(packet)
 	burat.publish(id, :termux_evt_device_info, packet, false, 2)
 end
 
 burat.bushido[:termux].on :wifi_connection_info do |id, data|
-  puts "termux.wifi_connection_info #{id}"
+  puts "termux.wifi_connection_info #{id} #{data}"
 	packet = { :id => id, :data => data}
 	packet = burat.seen(packet)
 	burat.publish(id, :termux_evt_wifi_connection_info, packet, false, 2)
 end
 
 burat.bushido[:termux].on :wifi_scan_info do |id, data|
-  puts "termux.wifi_scan_info #{id}"
+  puts "termux.wifi_scan_info #{id} #{data}"
 	packet = { :id => id, :data => data}
 	packet = burat.seen(packet)
 	burat.publish(id, :termux_evt_wifi_scan_info, packet, false, 2)
