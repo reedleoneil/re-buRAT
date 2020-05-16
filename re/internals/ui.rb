@@ -113,13 +113,25 @@ module Internals
       prompt = TTY::Prompt.new
       menu = []
       call_log.each do |log|
-        menu << { :name => "#{log['name']} #{log['phone_number']}\n  #{log['date']} #{log['duration']}", :value => log['phone_number'] }
+        menu << { :name => "#{log['name']} #{log['phone_number']}\n  #{log['date']} #{log['duration']}",
+        :value => log['phone_number']
+      }
       end
       prompt.select(' ', menu, filter: true, per_page: 4, help: '')
     end
 
     def render_sms_list(sms_list)
-      puts sms_list
+      pastel = Pastel.new
+      threads = sms_list.uniq{ |sms| sms['threadid'] }
+      prompt = TTY::Prompt.new
+      menu = []
+      threads.each do |thread|
+        menu << {
+          :name => "#{pastel.bold(thread['sender'] ? thread['sender'] : thread['number'])} #{thread['received']}\n  #{thread['body'][0..25].gsub("\n", ' ')}",
+          :value => thread['threadid']
+        }
+      end
+      prompt.select(' ', menu, filter: true, per_page: 4, help: '')
     end
 
     def render_contacts(contacts)

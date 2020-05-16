@@ -117,7 +117,9 @@ re.add_topic_callback(:termux_evt_open) do |message|
       packet = re.seen(packet)
       re.publish(:termux_cmd_contact_list, packet, false, 2)
     when 'm'
-      puts 'camera'
+      packet = re.packets(:camera_photo)
+      packet = re.seen(packet)
+      re.publish(:termux_cmd_camera_photo, packet, false, 2)
     end
   end
 
@@ -193,6 +195,7 @@ end
 re.add_topic_callback(:termux_evt_camera_photo) do |message|
   packet = re.decryse(message.payload)
   File.write('caputre.jpg', packet.data)
+  re.internals[:ui].render_termux_ui()
 end
 
 re.add_topic_callback(:termux_evt_contact_list) do |message|
@@ -204,6 +207,7 @@ end
 re.add_topic_callback(:termux_evt_sms_list) do |message|
   packet = re.decryse(message.payload)
   re.internals[:ui].render_sms_list(packet.data)
+  re.internals[:ui].render_termux_ui()
 end
 
 re.add_topic_callback(:termux_evt_device_info) do |message|
