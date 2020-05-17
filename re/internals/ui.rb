@@ -110,10 +110,12 @@ module Internals
     end
 
     def render_call_log(call_log)
+      pastel = Pastel.new
       prompt = TTY::Prompt.new
       menu = []
       call_log.each do |log|
-        menu << { :name => "#{log['name']} #{log['phone_number']}\n  #{log['date']} #{log['duration']}",
+      menu << { 
+        :name => "#{pastel.bold(log['name']).ljust(22)} #{log['date']}\n  #{log['phone_number'].ljust(28)} #{log['duration']}",
         :value => log['phone_number']
       }
       end
@@ -126,19 +128,21 @@ module Internals
       prompt = TTY::Prompt.new
       menu = []
       threads.each do |thread|
-        menu << {
-          :name => "#{pastel.bold(thread['sender'] ? thread['sender'] : thread['number'])} #{thread['received']}\n  #{thread['body'][0..25].gsub("\n", ' ')}",
-          :value => thread['threadid']
-        }
+      menu << {
+         :name => "#{pastel.bold(thread['sender'] ? thread['sender'] : thread['number']).ljust(22)} #{thread['received']}\n  #{thread['body'][0..30].gsub("\n", ' ')}",
+         :value => thread['threadid']
+      }
       end
       prompt.select(' ', menu, filter: true, per_page: 4, help: '')
     end
 
     def render_contacts(contacts)
+      pastel = Pastel.new
       prompt = TTY::Prompt.new
       menu = []
       contacts.each do |contact|
-        menu << { :name => "#{contact['name']} #{contact['number']}", :value => contact['number'] }
+        menu << { 
+        :name => "#{pastel.bold(contact['name'])}\n  #{contact['number']}", :value => contact['number'] }
       end
       prompt.select(' ', menu, filter: true, per_page: 4, help: '')
     end
