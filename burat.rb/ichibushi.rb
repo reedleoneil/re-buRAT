@@ -264,14 +264,14 @@ end
 
 # termux events
 burat.bushido[:termux].on :open do |id|
-  puts "termux.open #{id} #{data}"
+  puts "termux.open #{id}"
 	packet = { :id => id }
 	packet = burat.seen(packet)
 	burat.publish(id, :termux_evt_open, packet, false, 2)
 end
 
 burat.bushido[:termux].on :close do |id|
-  puts "termux.close #{id} #{data}"
+  puts "termux.close #{id}"
 	packet = { :id => id }
 	packet = burat.seen(packet)
 	burat.publish(id, :termux_evt_close, packet, false, 2)
