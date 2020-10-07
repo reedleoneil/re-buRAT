@@ -8,10 +8,6 @@ require 'tty-table'
 
 module Internals
   class UI
-    def initialize()
-      @on_render_termux = lambda { |prompt| puts prompt }
-    end
-
     def render_table_bushi(bushi)
       data = []
       bushi.each_value do |value|
