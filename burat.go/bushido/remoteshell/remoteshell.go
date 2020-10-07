@@ -7,6 +7,7 @@ import(
   	"os/exec"
     "runtime"
     "strconv"
+    "syscall"
 )
 
 type remoteShell struct {
@@ -49,6 +50,7 @@ func (r *remoteShell) OnError(callback func(error error)) { r.onError = callback
 
 func (r *remoteShell) Open() {
   cmd := exec.Command(r.shell)
+  cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
 
 	cmdInReader, err := cmd.StdinPipe()
 	if err != nil {
