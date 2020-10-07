@@ -6,7 +6,7 @@ re = Re.new
 
 re.internals[:ui].render_banner('re:LS')
 
-re.internals[:optparse].program_name = "re:ls"
+re.internals[:optparse].program_name = "re_ls"
 re.internals[:optparse].version = "0.0.1"
 re.internals[:optparse].on('-b', '--bushi',  '=BUSHI',  'target bushi')
 re.internals[:optparse].parse!(into: params)

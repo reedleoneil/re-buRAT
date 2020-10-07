@@ -8,9 +8,9 @@ params = {
 
 re = Re.new
 
-re.internals[:ui].render_banner('re:MOTESHELL')
+re.internals[:ui].render_banner('re: MOTESHELL')
 
-re.internals[:optparse].program_name = "re:moteshell"
+re.internals[:optparse].program_name = "re_moteshell"
 re.internals[:optparse].version = "0.0.1"
 re.internals[:optparse].on('-b', '--bushi',  '=BUSHI',  'target bushi')
 re.internals[:optparse].on('-i', '--id',     '=ID',     'id of remote shell')

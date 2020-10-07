@@ -10,9 +10,9 @@ progressbar = nil
 
 re = Re.new
 
-re.internals[:ui].render_banner('re:FILERW')
+re.internals[:ui].render_banner('re: FILERW')
 
-re.internals[:optparse].program_name = "re:filerw"
+re.internals[:optparse].program_name = "re_filerw"
 re.internals[:optparse].version = "0.0.1"
 re.internals[:optparse].on('-b', '--bushi',        '=ID',              'target bushi')
 re.internals[:optparse].on('-i', '--id',           '=ID',              'id of remote shell')
