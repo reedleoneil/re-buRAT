@@ -100,7 +100,7 @@ class BuRat
       begin
         init_mqtt()
         @internals[:mqtt].connect()
-        @internals[:mqtt].subscribe(@cmd_topics)
+        @internals[:mqtt].subscribe(@cmd_topics) if @cmd_topics.any?
       rescue StandardError => error
         puts error.full_message
         sleep 11
